@@ -44,6 +44,15 @@ const NAME_SIG = { id: "n1", kind: "image", name: "김길동", width: 2, height:
   const marks = () => page.evaluate(() => [...document.querySelectorAll(".item")].map(el => ({ kind: el.className, text: el.querySelector(".mark-text")?.textContent ?? null, width: el.style.width, left: el.style.left })));
   const tool = name => page.click(`.mark-btn[data-tool="${name}"]`);
 
+  // desktop sidebar: 서명 그리기|⋯ on top, signatures, then the tools row just above the settings
+  const side = await page.evaluate(() => {
+    const r = q => document.querySelector(q).getBoundingClientRect();
+    return { make: r(".sig-make"), draw: r("#newSigBtn"), more: r("#moreSigBtn"), list: r("#sigList"), tools: r(".mark-tools"), foot: r("#sidebarFoot"), heading: Boolean(document.querySelector("#sidebarFoot h2")) };
+  });
+  assert(side.more.left >= side.draw.right - 1 && side.more.right <= side.make.right && side.more.top >= side.make.top && side.more.bottom <= side.make.bottom, "⋯ sits inside the 서명 그리기 button shape, after its label");
+  assert(side.list.bottom <= side.tools.top && side.tools.bottom <= side.foot.top && side.foot.top - side.tools.bottom < 40, "desktop: the tools row sits under the signatures, right above the settings");
+  assert(!side.heading && await page.locator("#dpi").isVisible() && await page.locator("#exportSigBtn").isVisible(), "desktop: the settings rows show without a 설정 heading");
+
   // ⋯ next to 서명 그리기 holds the other ways to make a signature
   assert(await page.locator("#sigMenu").isHidden() && await page.locator("#nameSigBtn").isHidden(), "the ⋯ menu starts closed");
   await page.click("#moreSigBtn");

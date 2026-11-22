@@ -90,12 +90,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, .item:focus-vis
 .setting-row .select-control { min-width: 0; }
 .setting-row select { width: 100%; height: 32px; padding: 0 28px 0 11px; border-radius: 10px; font-size: 13px; font-weight: 500; }
 .setting-row .select-arrow { right: 9px; top: 50%; bottom: auto; width: 15px; height: 15px; transform: translateY(-50%); }
-.section-title { display: flex; align-items: center; gap: 7px; }
-.section-title .icon { width: 17px; height: 17px; color: #586574; }
 .sidebar h2 { margin: 0; color: #252b33; font-size: 16px; font-weight: 650; letter-spacing: -.02em; }
 .hint { margin: -4px 0 4px; color: #6a7480; font-size: 13px; line-height: 1.6; white-space: nowrap; }
 .sidebar-actions { display: grid; gap: 4px; }
-.sidebar-foot { display: grid; gap: 8px; margin-top: auto; padding-top: 14px; }
+.sidebar-foot { display: grid; gap: 8px; padding-top: 4px; }
 .sidebar-foot .link-btn { justify-self: start; }
 .option-buttons { display: grid; grid-template-columns: auto 1fr; gap: 4px; }
 .option-buttons .btn { gap: 4px; min-height: 32px; padding: 0 9px; border-radius: 10px; background: #fff; font-size: 13px; font-weight: 500; }
@@ -254,11 +252,16 @@ html[data-platform="extension"] .web-only { display: none; }
   *, *::before, *::after { transition: none !important; }
 }
 
-/* ---------- ⋯ menu next to 서명 그리기 ---------- */
-.sig-make { position: relative; display: flex; gap: 4px; }
-.sig-make #newSigBtn { flex: 1; min-width: 0; }
-.more-btn { flex: none; width: 38px; padding: 0; border-color: transparent; background: transparent; color: #586574; }
-.more-btn:hover:not(:disabled), .more-btn[aria-expanded="true"] { background: var(--neutral); border-color: var(--line-strong); }
+/* ---------- 서명 그리기 | ⋯ : one rounded split button, two click targets ---------- */
+.sig-make {
+  position: relative; display: flex; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--neutral);
+}
+.sig-make .btn { min-height: 36px; border: 0; background: transparent; }
+.sig-make #newSigBtn { flex: 1; min-width: 0; border-radius: 11px 0 0 11px; }
+.more-btn { position: relative; flex: none; width: 38px; padding: 0; border-radius: 0 11px 11px 0; color: #586574; }
+.more-btn::before { content: ""; position: absolute; top: 9px; bottom: 9px; left: 0; width: 1px; background: var(--line-strong); }
+.sig-make .btn:hover:not(:disabled), .more-btn[aria-expanded="true"] { background: var(--neutral-hover); }
+.sig-make .btn:focus-visible { outline-offset: -2px; }
 .sig-menu {
   position: absolute; top: calc(100% + 6px); right: 0; z-index: 20; display: grid; min-width: 196px; padding: 6px;
   border: 1px solid var(--line-strong); border-radius: 12px; background: #fff; box-shadow: 0 10px 30px rgba(20, 30, 45, .14);
@@ -272,7 +275,8 @@ html[data-platform="extension"] .web-only { display: none; }
 .menu-item:disabled { opacity: .45; cursor: default; }
 
 /* ---------- text & marks (글자·표시 넣기) ---------- */
-.mark-tools { display: grid; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+/* Desktop: the row sits at the bottom of the sidebar, just above the settings. */
+.mark-tools { display: grid; gap: 8px; margin-top: auto; padding-top: 14px; }
 /* Six icon buttons in a row; the names are tooltips and screen-reader labels. */
 .mark-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
 .mark-btn {
@@ -365,8 +369,11 @@ html[data-platform="extension"] .web-only { display: none; }
   .sidebar { overflow: visible; }
   .sidebar.settings-open { overflow-y: auto; }
   .sig-make #newSigBtn { flex: none; }
+  .sig-make .btn { min-height: 42px; border: 0; background: transparent; }
+  .sig-make .more-btn { width: 34px; }
+  .sig-make .btn:hover:not(:disabled), .sig-make .more-btn[aria-expanded="true"] { background: var(--neutral-hover); }
   .sig-menu { top: auto; bottom: calc(100% + 8px); right: 0; }
-  .mark-tools { display: flex; flex-basis: 100%; align-items: center; gap: 6px; padding-top: 8px; overflow-x: auto; scrollbar-width: none; }
+  .mark-tools { display: flex; flex-basis: 100%; align-items: center; gap: 6px; margin-top: 0; padding-top: 8px; border-top: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
   .mark-grid { display: flex; flex: none; }
   .mark-btn { width: 42px; height: 40px; }
   /* Same bar as before: signatures, then the buttons, then the tools row. */
@@ -389,5 +396,6 @@ html[data-platform="extension"] .web-only { display: none; }
 @media (max-width: 400px) {
   .sidebar-actions { gap: 2px; }
   .sidebar-actions .btn { width: 38px; }
+  .sig-make .more-btn { width: 30px; }
   .sig-list li { width: 108px; }
 }
