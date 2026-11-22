@@ -1,0 +1,135 @@
+각인(gakin)은 아래 오픈소스를 포함합니다. 각 라이선스 원문은 해당 vendor 폴더에 있습니다.
+
+1. PDF.js (pdfjs-dist 6.5.438) — Apache License 2.0 — https://github.com/mozilla/pdf.js
+   vendor/pdfjs/LICENSE, 포함된 WASM 디코더(OpenJPEG, JBIG2, QCMS)의 라이선스: vendor/pdfjs/wasm/LICENSE_*
+   PDF 표준 글꼴 대체본(Foxit, Liberation)의 라이선스: vendor/pdfjs/standard_fonts/LICENSE_FOXIT,
+   vendor/pdfjs/standard_fonts/LICENSE_LIBERATION
+
+2. perfect-freehand 1.2.3 — MIT License — https://github.com/steveruizok/perfect-freehand
+   vendor/perfect-freehand/LICENSE
+
+3. Lucide (lucide-static 1.75.0) — ISC License — https://lucide.dev
+   vendor/lucide/LICENSE
+   사용한 아이콘: calendar, check, chevron-down, circle, download, ellipsis, eraser,
+   file-up, image, minus, pen-line, plus, redo-2, rotate-cw, settings, stamp, text-cursor-input,
+   trash-2, type, undo-2, upload, user-round, x
+   (경로는 수정하지 않았습니다)
+
+4. 손글씨 글꼴 ("이름으로 만들기") — SIL Open Font License 1.1
+   출처: https://github.com/google/fonts/tree/main/ofl
+   - 나눔손글씨 펜 (Nanum Pen Script) — Copyright (c) 2010, NHN Corporation,
+     with Reserved Font Name Nanum, NanumPen 외. 수정하지 않은 원본입니다.
+     fonts/nanum-pen.ttf, 라이선스: fonts/nanum-pen-OFL.txt
+   - 나눔손글씨 붓 (Nanum Brush Script) — Copyright (c) 2010, NHN Corporation,
+     with Reserved Font Name Nanum, NanumBrush 외. 수정하지 않은 원본입니다.
+     fonts/nanum-brush.ttf, 라이선스: fonts/nanum-brush-OFL.txt
+   - 동해 독도 (East Sea Dokdo) — Copyright (c) YoonDesign Inc.
+     영문·한글 글자만 남기고(subset) WOFF2로 바꾼 수정본입니다.
+     fonts/dokdo.woff2, 라이선스: fonts/dokdo-OFL.txt
+   - 개구 (Gaegu) — Copyright 2018 The Gaegu Project Authors
+     영문·한글 글자만 남기고(subset) WOFF2로 바꾼 수정본입니다.
+     fonts/gaegu.woff2, 라이선스: fonts/gaegu-OFL.txt
+   글꼴은 앱 안에서 서명 그림을 만드는 데만 쓰이며 따로 판매하지 않습니다.
+   글꼴 파일은 scripts/build-fonts.py로 만듭니다.
+
+   굴림·돋움(HanYang I&C, Windows에 포함된 글꼴)은 각인에 포함하지 않습니다.
+   사용자 PC에 설치된 글꼴을 브라우저가 불러와 서명 그림을 그리는 데만 쓰며,
+   설치되어 있지 않으면 고를 수 없습니다.
+
+5. rhwp (@rhwp/core 0.9.0) — MIT License — https://github.com/edwardkim/rhwp
+   한글(HWP·HWPX) 문서를 그리는 Rust + WebAssembly 엔진. 수정하지 않은 원본입니다.
+   vendor/rhwp/LICENSE. WASM에 함께 컴파일된 크레이트·글꼴·자료의 라이선스와
+   고지는 vendor/rhwp/notices/THIRD_PARTY_LICENSES.md와 vendor/rhwp/notices/ 아래 원문에 있습니다.
+   "한글", "한컴", "HWP", "HWPX"는 주식회사 한글과컴퓨터의 등록 상표이며,
+   각인과 rhwp는 한글과컴퓨터와 제휴 관계가 없습니다.
+
+----- perfect-freehand -----
+MIT License
+
+Copyright (c) 2021 Stephen Ruiz Ltd
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+----- Lucide -----
+ISC License
+
+Copyright (c) 2026 Lucide Icons and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+---
+
+The following Lucide icons are derived from the Feather project:
+
+airplay, alert-circle, alert-octagon, alert-triangle, aperture, arrow-down-circle, arrow-down-left, arrow-down-right, arrow-down, arrow-left-circle, arrow-left, arrow-right-circle, arrow-right, arrow-up-circle, arrow-up-left, arrow-up-right, arrow-up, at-sign, calendar, cast, check, chevron-down, chevron-left, chevron-right, chevron-up, chevrons-down, chevrons-left, chevrons-right, chevrons-up, circle, clipboard, clock, code, columns, command, compass, corner-down-left, corner-down-right, corner-left-down, corner-left-up, corner-right-down, corner-right-up, corner-up-left, corner-up-right, crosshair, database, divide-circle, divide-square, dollar-sign, download, external-link, feather, frown, hash, headphones, help-circle, info, italic, key, layout, life-buoy, link-2, link, loader, lock, log-in, log-out, maximize, meh, minimize, minimize-2, minus-circle, minus-square, minus, monitor, moon, more-horizontal, more-vertical, move, music, navigation-2, navigation, octagon, pause-circle, percent, plus-circle, plus-square, plus, power, radio, rss, search, server, share, shopping-bag, sidebar, smartphone, smile, square, table-2, tablet, target, terminal, trash-2, trash, triangle, tv, type, upload, x-circle, x-octagon, x-square, x, zoom-in, zoom-out
+
+The MIT License (MIT) (for the icons listed above)
+
+Copyright (c) 2013-present Cole Bemis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+----- rhwp -----
+MIT License
+
+Copyright (c) 2025-2026 Edward Kim
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

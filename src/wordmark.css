@@ -1,0 +1,23 @@
+/* Wordmark: bold upright text
+   followed by a CSS circle dot, so the dot never depends on a font's period. */
+.gakin-wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: .085em;
+  color: #1d2838;
+  font: 700 var(--gakin-wordmark-size, 20px)/1 -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  font-style: normal;
+  font-synthesis: none;
+  letter-spacing: normal;
+  white-space: nowrap;
+}
+.gakin-wordmark__text { font: inherit; letter-spacing: -.055em; }
+.gakin-wordmark__dot {
+  display: inline-block;
+  flex: none;
+  width: .17em;
+  height: .17em;
+  border-radius: 50%;
+  background: #476eec;
+  transform: translateY(-.025em);
+}

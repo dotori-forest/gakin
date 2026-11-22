@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "PDF 문서 서명",
+  "short_name": "각인",
+  "version": "0.1.0",
+  "description": "미리 그려 둔 서명을 PDF에 찍고, 스캔본처럼 편집할 수 없는 PDF로 저장합니다. 파일은 외부로 전송되지 않습니다.",
+  "minimum_chrome_version": "116",
+  "icons": { "16": "icons/icon16.png", "32": "icons/icon32.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
+  "action": { "default_title": "PDF 문서 서명", "default_icon": { "16": "icons/icon16.png", "32": "icons/icon32.png" } },
+  "background": { "service_worker": "src/background.js" },
+  "permissions": ["storage"],
+  "content_security_policy": { "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'" }
+}
