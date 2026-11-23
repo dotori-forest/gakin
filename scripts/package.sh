@@ -6,5 +6,5 @@ version=$(node -p 'require("./manifest.json").version')
 mkdir -p dist
 out="dist/gakin-${version}.zip"
 rm -f "$out"
-zip -qr "$out" manifest.json editor.html icons fonts src vendor LICENSE THIRD_PARTY_NOTICES.txt -x "*.DS_Store" "src/page.css" "src/wordmark.css"
+zip -qr "$out" manifest.json editor.html icons fonts src vendor LICENSE THIRD_PARTY_NOTICES.txt -x "*.DS_Store" "src/page.css" "src/wordmark.css" "icons/og.png"
 echo "$out ($(du -h "$out" | cut -f1))"
