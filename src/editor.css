@@ -289,6 +289,9 @@ html[data-platform="extension"] .web-only { display: none; }
 /* No document yet: plainly grey instead of a faded navy that still looks pressable. */
 .save-split .btn:disabled { opacity: 1; border-color: #e4e7eb; background: #eef0f3; color: #a3acb8; }
 .save-split .more-btn:disabled::before { background: #d6dbe1; }
+/* The two halves meet in the middle: no border lines there, only the short divider. */
+.save-split #saveBtn:disabled { border-right-color: transparent; }
+.save-split .more-btn:disabled { border-left-color: transparent; }
 .save-menu { min-width: 172px; }
 
 /* ---------- text & marks (글자·표시 넣기) ---------- */
