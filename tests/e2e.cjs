@@ -80,6 +80,13 @@ function assert(cond, msg) { if (!cond) { console.error("FAIL:", msg); process.e
   assert(canon(restored) === canon(stored), "backup restores the same signature");
   assert(await page.locator(".web-only").first().isVisible(), "web-only notes shown outside the extension");
   assert(errors.length === 0, `no page errors ${JSON.stringify(errors)}`);
+  if (SITE) {
+    // Each deploy versions its CSS/JS so Safari can't mix a new page with old cached files.
+    const html = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+    const unversioned = fs.readdirSync(path.join(ROOT, "src")).filter(f => f.endsWith(".js"))
+      .flatMap(f => fs.readFileSync(path.join(ROOT, "src", f), "utf8").match(/(from |import\()"\.{1,2}\/[^"?]+"/g) || []);
+    assert(/editor\.css\?v=\w+"/.test(html) && /editor\.js\?v=\w+"/.test(html) && unversioned.length === 0, `site: the stylesheet, entry script and every src import carry ?v= (${unversioned.join(", ") || "all versioned"})`);
+  }
   const head = fs.readFileSync(`${S}/out.pdf`).subarray(0, 8).toString();
   assert(head.startsWith("%PDF-1.4"), "output is a PDF");
   try {
