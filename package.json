@@ -5,9 +5,10 @@
   "license": "MIT",
   "description": "PDF 문서 서명: 미리 그려 둔 서명을 PDF·한글 문서에 찍고 편집할 수 없는 PDF로 저장하는 Chrome 확장과 웹 앱",
   "scripts": {
-    "test": "node tests/e2e.cjs && node tests/close.cjs && node tests/name.cjs && node tests/hwp.cjs && node tests/password.cjs && node tests/robustness.cjs && node tests/editing.cjs && node tests/marks.cjs && bash scripts/build-site.sh && node tests/e2e.cjs --site",
+    "test": "node tests/e2e.cjs && node tests/close.cjs && node tests/name.cjs && node tests/hwp.cjs && node tests/password.cjs && node tests/robustness.cjs && node tests/editing.cjs && node tests/marks.cjs && node tests/image-save.cjs && bash scripts/build-site.sh && node tests/e2e.cjs --site",
     "test:extension": "node tests/extension.cjs",
     "test:close": "node tests/close.cjs",
+    "test:image": "node tests/image-save.cjs",
     "test:name": "node tests/name.cjs",
     "test:hwp": "node tests/hwp.cjs",
     "test:password": "node tests/password.cjs",

@@ -30,7 +30,7 @@ function assert(cond, msg) { if (!cond) { console.error("FAIL:", msg); process.e
   await page.goto(`http://localhost:${server.address().port}/editor.html`);
 
   const order = await page.$$eval(".topbar > *", els => els.map(el => el.id).filter(Boolean));
-  assert(order.indexOf("openBtn") + 2 === order.indexOf("saveBtn"), "file-open button sits left of save");
+  assert(order.indexOf("openBtn") + 2 === order.indexOf("saveGroup"), "file-open button sits left of save");
   assert(await page.locator(".sidebar #dpi").isVisible() && await page.locator("#dpi").inputValue() === "200", "quality select in the sidebar, 보통 by default");
   assert(await page.locator("#viewerTools").isHidden(), "zoom tools hidden before opening");
   assert(await page.locator("#docChip").isHidden(), "no file name before opening");

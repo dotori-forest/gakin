@@ -1,5 +1,6 @@
 import { openDocument, DocumentError } from "./documentSources.js";
-import { exportFlatPdf } from "./exporter.js";
+import { exportFlatPdf, exportFlatImages } from "./exporter.js";
+import { buildZip } from "./zip.js";
 import { SignaturePad, imageToStamp } from "./signaturePad.js";
 import { buildVectorSignature, signaturePaths, PEN_SIZES, PEN_COLORS } from "./strokes.js";
 import { loadSignatures, saveSignatures, MAX_SIGNATURES } from "./signatureStore.js";
@@ -419,38 +420,42 @@ async function addSignature(sig) {
 
 $("newSigBtn").addEventListener("click", openPad);
 
+// A ⋯ button that opens a small menu, closed by Escape, Tab or a click elsewhere.
+function popupMenu(button, menu, container) {
+  const open = () => {
+    menu.hidden = false;
+    button.setAttribute("aria-expanded", "true");
+    menu.querySelector(".menu-item:not(:disabled)")?.focus();
+  };
+  const close = ({ focusButton = false } = {}) => {
+    if (menu.hidden) return;
+    menu.hidden = true;
+    button.setAttribute("aria-expanded", "false");
+    if (focusButton) button.focus();
+  };
+  button.addEventListener("click", () => (menu.hidden ? open() : close()));
+  menu.addEventListener("keydown", e => {
+    const items = [...menu.querySelectorAll(".menu-item:not(:disabled)")];
+    const i = items.indexOf(document.activeElement);
+    if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      close({ focusButton: true });
+    } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      items[(i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
+    } else if (e.key === "Tab") {
+      close();
+    }
+  });
+  document.addEventListener("pointerdown", e => {
+    if (!container.contains(e.target)) close();
+  });
+  return close;
+}
+
 // ⋯ next to 서명 그리기: the other ways to make a signature.
-function openSigMenu() {
-  $("sigMenu").hidden = false;
-  $("moreSigBtn").setAttribute("aria-expanded", "true");
-  $("sigMenu").querySelector(".menu-item:not(:disabled)")?.focus();
-}
-
-function closeSigMenu({ focusButton = false } = {}) {
-  if ($("sigMenu").hidden) return;
-  $("sigMenu").hidden = true;
-  $("moreSigBtn").setAttribute("aria-expanded", "false");
-  if (focusButton) $("moreSigBtn").focus();
-}
-
-$("moreSigBtn").addEventListener("click", () => ($("sigMenu").hidden ? openSigMenu() : closeSigMenu()));
-$("sigMenu").addEventListener("keydown", e => {
-  const items = [...$("sigMenu").querySelectorAll(".menu-item:not(:disabled)")];
-  const i = items.indexOf(document.activeElement);
-  if (e.key === "Escape") {
-    e.preventDefault();
-    e.stopPropagation();
-    closeSigMenu({ focusButton: true });
-  } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-    e.preventDefault();
-    items[(i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
-  } else if (e.key === "Tab") {
-    closeSigMenu();
-  }
-});
-document.addEventListener("pointerdown", e => {
-  if (!e.target.closest(".sig-make")) closeSigMenu();
-});
+const closeSigMenu = popupMenu($("moreSigBtn"), $("sigMenu"), document.querySelector(".sig-make"));
 
 // ---------- name signature dialog ----------
 
@@ -731,7 +736,7 @@ async function loadFile(file) {
   $("docName").title = doc.name;
   $("docChip").hidden = false;
   $("empty").hidden = true;
-  $("saveBtn").disabled = false;
+  $("saveBtn").disabled = $("moreSaveBtn").disabled = false;
   buildPages();
   updateZoomUi();
   $("viewer").scrollTop = 0;
@@ -769,7 +774,8 @@ async function closeDocument() {
   $("docName").title = "";
   $("docChip").hidden = true;
   $("empty").hidden = false;
-  $("saveBtn").disabled = true;
+  closeSaveMenu();
+  $("saveBtn").disabled = $("moreSaveBtn").disabled = true;
   $("toast").hidden = true;
   updateZoomUi();
 }
@@ -1381,38 +1387,99 @@ document.addEventListener("keydown", e => {
 
 // ---------- save ----------
 
-async function save() {
+// 저장 | ⋯ : PDF on computers, images on phones and tablets (they go straight
+// to the photo library or a chat app); the ⋯ menu offers both.
+const SAVE_LABELS = { pdf: "PDF로 저장", image: "이미지로 저장" };
+const defaultFormat = coarsePointer.matches ? "image" : "pdf";
+$("saveLabel").textContent = SAVE_LABELS[defaultFormat];
+const closeSaveMenu = popupMenu($("moreSaveBtn"), $("saveMenu"), $("saveGroup"));
+
+const savedName = () => `${state.doc.name.replace(/\.[^.]+$/, "")}_서명`;
+
+// Phones: the share sheet (사진에 저장, 카카오톡 …). Computers: a download,
+// zipped when there is more than one page.
+async function deliverImages(blobs) {
+  const base = savedName();
+  const names = blobs.length === 1 ? [`${base}.jpg`] : blobs.map((_, i) => `${base}_${i + 1}.jpg`);
+  const files = blobs.map((blob, i) => new File([blob], names[i], { type: "image/jpeg" }));
+  if (coarsePointer.matches && navigator.canShare?.({ files })) {
+    const share = async () => {
+      try {
+        await navigator.share({ files });
+        return "shared";
+      } catch (error) {
+        return error.name === "AbortError" ? "cancelled" : error.name === "NotAllowedError" ? "blocked" : "failed";
+      }
+    };
+    let result = await share();
+    // Rendering can outlast the tap that started it; a second tap lets the browser share.
+    if (result === "blocked" && await askConfirm({
+      title: "이미지가 준비됐습니다",
+      description: `${files.length}장을 사진에 저장하거나 다른 앱으로 보낼 수 있습니다.`,
+      confirmLabel: "저장·공유",
+    })) result = await share();
+    if (result === "shared") return "이미지를 내보냈습니다.";
+    if (result === "cancelled" || result === "blocked") return null;
+  }
+  if (files.length === 1) {
+    downloadBlob(files[0], names[0]);
+  } else if (coarsePointer.matches) {
+    for (const [i, file] of files.entries()) setTimeout(() => downloadBlob(file, names[i]), i * 300);
+  } else {
+    downloadBlob(await buildZip(files.map((blob, i) => ({ name: names[i], blob }))), `${base}.zip`);
+  }
+  return "저장했습니다. 다운로드 폴더를 확인하세요.";
+}
+
+async function save(format = defaultFormat) {
   if (!state.doc) return;
+  const label = format === "image" ? "이미지" : "PDF";
   if (state.items.length === 0 && !(await askConfirm({
     title: "서명 없이 저장할까요?",
-    description: "문서에 찍힌 서명이 없습니다. 그대로 편집할 수 없는 PDF로 저장합니다.",
+    description: format === "image"
+      ? "문서에 찍힌 서명이 없습니다. 그대로 이미지로 저장합니다."
+      : "문서에 찍힌 서명이 없습니다. 그대로 편집할 수 없는 PDF로 저장합니다.",
     confirmLabel: "그대로 저장",
   }))) return;
   select(null);
   arm(null);
   const dpi = Number($("dpi").value) || 200;
   $("busyNote").hidden = false; // shown only while saving, not while opening
-  busy("PDF로 저장하는 중…", 0);
+  busy(`${label}로 저장하는 중…`, 0);
+  let blobs = null;
   try {
     const signatures = new Map(state.signatures.map(s => [s.id, s]));
-    const blob = await exportFlatPdf(state.doc, state.items, signatures, {
+    const opts = {
       dpi,
-      onProgress: (done, total) => busy(`PDF로 저장하는 중… (${done}/${total}쪽)`, done / total),
-    });
-    downloadBlob(blob, `${state.doc.name.replace(/\.[^.]+$/, "")}_서명.pdf`);
-    state.savedItems = itemsKey(state.items);
-    state.dirty = false;
-    toast("저장했습니다. 다운로드 폴더를 확인하세요.");
+      onProgress: (done, total) => busy(`${label}로 저장하는 중… (${done}/${total}쪽)`, done / total),
+    };
+    if (format === "image") {
+      blobs = await exportFlatImages(state.doc, state.items, signatures, opts);
+    } else {
+      downloadBlob(await exportFlatPdf(state.doc, state.items, signatures, opts), `${savedName()}.pdf`);
+    }
   } catch (error) {
     console.error(error);
-    toast("PDF를 저장하지 못했습니다. 화질을 낮춰 다시 시도해 주세요.", 6000);
+    toast(`${label}로 저장하지 못했습니다. 화질을 낮춰 다시 시도해 주세요.`, 6000);
+    return;
   } finally {
     $("busyNote").hidden = true;
     busy(null);
   }
+  const message = blobs ? await deliverImages(blobs) : "저장했습니다. 다운로드 폴더를 확인하세요.";
+  if (!message) return;
+  state.savedItems = itemsKey(state.items);
+  state.dirty = false;
+  toast(message);
 }
 
-$("saveBtn").addEventListener("click", save);
+$("saveBtn").addEventListener("click", () => save());
+for (const item of $("saveMenu").querySelectorAll(".menu-item")) {
+  item.addEventListener("click", () => {
+    closeSaveMenu();
+    save(item.dataset.format);
+  });
+}
 
 // ---------- opening files ----------
 

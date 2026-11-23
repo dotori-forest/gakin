@@ -275,6 +275,15 @@ html[data-platform="extension"] .web-only { display: none; }
 .menu-item:hover:not(:disabled), .menu-item:focus-visible { background: var(--neutral); outline: none; }
 .menu-item:disabled { opacity: .45; cursor: default; }
 
+/* ---------- 저장 | ⋯ : the same split button in navy ---------- */
+.save-split { position: relative; display: flex; flex: none; }
+.save-split #saveBtn { border-radius: 12px 0 0 12px; }
+.save-split .more-btn { width: 34px; border-radius: 0 12px 12px 0; color: #fff; }
+.save-split .more-btn::before { top: 10px; bottom: 10px; background: rgba(255, 255, 255, .28); }
+.save-split .more-btn[aria-expanded="true"] { background: var(--navy-hover); }
+.save-split .btn:focus-visible { outline-offset: -2px; outline-color: #fff; }
+.save-menu { min-width: 172px; }
+
 /* ---------- text & marks (글자·표시 넣기) ---------- */
 /* Desktop: the row sits at the bottom of the sidebar, just above the settings. */
 .mark-tools { display: grid; gap: 8px; margin-top: auto; padding-top: 14px; }
@@ -343,9 +352,9 @@ html[data-platform="extension"] .web-only { display: none; }
   .topbar .spacer { flex: 0 0 0; }
   /* margin-left:auto keeps 파일 열기·PDF로 저장 on the right even before a file is open. */
   #openBtn { flex: none; width: 40px; margin-left: auto; padding: 0; }
-  #saveBtn { flex: none; }
   #openBtn .btn-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
-  #saveBtn { padding: 7px 12px; }
+  #saveBtn { padding: 7px 10px 7px 12px; }
+  .save-split .more-btn { width: 30px; }
 
   .layout { flex-direction: column-reverse; }
   .viewer-area { min-height: 0; }
@@ -377,7 +386,7 @@ html[data-platform="extension"] .web-only { display: none; }
   .sig-make .btn { min-height: 42px; border: 0; background: transparent; }
   .sig-make .more-btn { width: 34px; }
   .sig-make .btn:hover:not(:disabled), .sig-make .more-btn[aria-expanded="true"] { background: var(--neutral-hover); }
-  .sig-menu { top: auto; bottom: calc(100% + 8px); left: 0; right: auto; }
+  .sig-menu:not(.save-menu) { top: auto; bottom: calc(100% + 8px); left: 0; right: auto; }
   .mark-tools { display: flex; flex: 1 1 0; min-width: 0; margin-top: 0; padding-top: 0; }
   .mark-grid { display: flex; flex: 1; gap: 4px; }
   .mark-btn { flex: 1 1 0; min-width: 0; max-width: 46px; height: 44px; }
@@ -403,6 +412,8 @@ html[data-platform="extension"] .web-only { display: none; }
   .sidebar { column-gap: 6px; }
   .sidebar-actions .btn { width: 38px; }
   .sig-make .more-btn { width: 30px; }
+  /* "이미지로 저장" is long; drop its icon so the file name keeps some room. */
+  #saveBtn .icon { display: none; }
   .mark-grid { gap: 3px; }
   .sig-list li { width: 108px; }
 }

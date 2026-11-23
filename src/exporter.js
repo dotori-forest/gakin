@@ -45,33 +45,49 @@ function canvasToJpeg(canvas, quality) {
   });
 }
 
+// Renders every page with its stamps as a JPEG, one page at a time.
+async function* flatPages(doc, items, signatures, { dpi = 200, quality = 0.9, onProgress } = {}) {
+  const canvas = document.createElement("canvas");
+  try {
+    for (let i = 0; i < doc.pageCount; i++) {
+      // Browsers (Safari on iOS especially) refuse canvases much over ~16.7 MP,
+      // so very large pages are written slightly below the chosen dpi.
+      const size = doc.pageSize(i);
+      const scale = Math.min(dpi / 72, Math.sqrt(MAX_EXPORT_PIXELS / (size.width * size.height)));
+      await doc.render(i, canvas, scale);
+      const ctx = canvas.getContext("2d");
+      for (const item of items) {
+        if (item.page !== i) continue;
+        const sig = signatures.get(item.sigId);
+        const drawable = item.kind === "text" ? Boolean(item.text) : item.kind === "shape" || Boolean(sig);
+        if (drawable) await drawItem(ctx, item, sig, scale);
+      }
+      const blob = await canvasToJpeg(canvas, quality);
+      yield { blob, pxWidth: canvas.width, pxHeight: canvas.height, ptWidth: size.width, ptHeight: size.height };
+      onProgress?.(i + 1, doc.pageCount);
+    }
+  } finally {
+    canvas.width = canvas.height = 0;
+  }
+}
+
 /**
  * @param {object} doc document source (see documentSources.js)
  * @param {{page:number,x:number,y:number,w:number,h:number,sigId:string}[]} items
  * @param {Map<string, object>} signatures by id
  * @param {{dpi?: number, quality?: number, onProgress?: (done:number,total:number)=>void}} opts
  */
-export async function exportFlatPdf(doc, items, signatures, { dpi = 200, quality = 0.9, onProgress } = {}) {
+export async function exportFlatPdf(doc, items, signatures, opts = {}) {
   const pages = [];
-  const canvas = document.createElement("canvas");
-  for (let i = 0; i < doc.pageCount; i++) {
-    // Browsers (Safari on iOS especially) refuse canvases much over ~16.7 MP,
-    // so very large pages are written slightly below the chosen dpi.
-    const { width, height } = doc.pageSize(i);
-    const scale = Math.min(dpi / 72, Math.sqrt(MAX_EXPORT_PIXELS / (width * height)));
-    await doc.render(i, canvas, scale);
-    const ctx = canvas.getContext("2d");
-    for (const item of items) {
-      if (item.page !== i) continue;
-      const sig = signatures.get(item.sigId);
-      const drawable = item.kind === "text" ? Boolean(item.text) : item.kind === "shape" || Boolean(sig);
-      if (drawable) await drawItem(ctx, item, sig, scale);
-    }
-    const jpeg = new Uint8Array(await (await canvasToJpeg(canvas, quality)).arrayBuffer());
-    const size = doc.pageSize(i);
-    pages.push({ jpeg, pxWidth: canvas.width, pxHeight: canvas.height, ptWidth: size.width, ptHeight: size.height });
-    onProgress?.(i + 1, doc.pageCount);
+  for await (const { blob, ...page } of flatPages(doc, items, signatures, opts)) {
+    pages.push({ jpeg: new Uint8Array(await blob.arrayBuffer()), ...page });
   }
-  canvas.width = canvas.height = 0;
   return buildImagePdf(pages, { title: doc.name.replace(/\.[^.]+$/, "") });
+}
+
+/** Same pages as exportFlatPdf, as one JPEG blob per page. */
+export async function exportFlatImages(doc, items, signatures, opts = {}) {
+  const images = [];
+  for await (const { blob } of flatPages(doc, items, signatures, opts)) images.push(blob);
+  return images;
 }
