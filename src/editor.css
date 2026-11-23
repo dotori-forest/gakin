@@ -340,7 +340,8 @@ html[data-platform="extension"] .web-only { display: none; }
   .brand-icon { width: 30px; height: 18px; margin-right: 2px; }
   .doc-chip { flex: 1 1 auto; }
   .topbar .spacer { flex: 0 0 0; }
-  #openBtn { flex: none; width: 40px; padding: 0; }
+  /* margin-left:auto keeps 파일 열기·PDF로 저장 on the right even before a file is open. */
+  #openBtn { flex: none; width: 40px; margin-left: auto; padding: 0; }
   #saveBtn { flex: none; }
   #openBtn .btn-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
   #saveBtn { padding: 7px 12px; }

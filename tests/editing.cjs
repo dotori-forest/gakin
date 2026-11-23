@@ -299,6 +299,8 @@ const SIG = { id: "wide", kind: "vector", name: "서명", color: "#000000", size
   const sp = await small.newPage();
   watch(sp);
   await seed(sp);
+  const saveRight = () => sp.evaluate(() => Math.round(innerWidth - document.querySelector("#saveBtn").getBoundingClientRect().right));
+  const gapBefore = await saveRight();
   fs.copyFileSync(`${S}/blank.pdf`, `${S}/아주-긴-파일-이름의-결재-문서-최종본-수정.pdf`);
   await sp.setInputFiles("#fileInput", `${S}/아주-긴-파일-이름의-결재-문서-최종본-수정.pdf`);
   await sp.waitForSelector(".page canvas");
@@ -307,6 +309,8 @@ const SIG = { id: "wide", kind: "vector", name: "서명", color: "#000000", size
     return { open: r("#openBtn").width, save: r("#saveBtn").right, list: r("#sigList").width, card: r(".sig-list li").width, w: innerWidth };
   });
   assert(sizes.open >= 40 && sizes.save <= sizes.w, `320px: the open button keeps its size with a long file name (${sizes.open}px)`);
+  const gapAfter = await saveRight();
+  assert(gapBefore === gapAfter && gapBefore <= 16, `320px: PDF로 저장 stays at the right edge before and after a file opens (${gapBefore}px → ${gapAfter}px)`);
   assert(sizes.list >= sizes.card, `320px: a whole signature card fits in the bar (${sizes.list} ≥ ${sizes.card})`);
   const top = await sp.locator(".page").first().boundingBox();
   await sp.touchscreen.tap(top.x + top.width / 2, top.y + 12);
