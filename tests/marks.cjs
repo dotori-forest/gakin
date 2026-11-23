@@ -237,6 +237,27 @@ const NAME_SIG = { id: "n1", kind: "image", name: "김길동", width: 2, height:
   assert(menu2.y >= 0 && corners, "phone: with the settings open, the ⋯ menu still shows whole");
   await phone.click("#moreSigBtn");
   await phone.click("#settingsToggle");
+  // The zoom bar moves when dragged by its grip, and stays inside the document area.
+  const zoomBar = await phone.locator("#viewerTools").boundingBox();
+  const dragTo = (dx, dy) => phone.evaluate(([dx, dy]) => {
+    const grip = document.querySelector(".tool-grip"), r = grip.getBoundingClientRect();
+    const x = r.x + r.width / 2, y = r.y + r.height / 2;
+    const ev = (type, px, py, target = grip) => target.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 5, pointerType: "touch", button: 0, isPrimary: true, clientX: px, clientY: py }));
+    ev("pointerdown", x, y);
+    for (let i = 1; i <= 5; i++) ev("pointermove", x + dx * i / 5, y + dy * i / 5, window);
+    ev("pointerup", x + dx, y + dy, window);
+  }, [dx, dy]);
+  await dragTo(-60, -200);
+  const zoomMoved = await phone.locator("#viewerTools").boundingBox();
+  assert(Math.abs(zoomMoved.y - (zoomBar.y - 200)) < 2 && zoomMoved.x < zoomBar.x, "phone: dragging the grip moves the zoom bar");
+  await dragTo(-2000, -2000);
+  const zoomClamped = await phone.locator("#viewerTools").boundingBox();
+  const areaTop = await phone.evaluate(() => document.querySelector(".viewer-area").getBoundingClientRect().top);
+  assert(zoomClamped.x >= 0 && zoomClamped.y >= areaTop, "phone: the zoom bar can't be dragged off the document area");
+  const zoomBefore = await phone.locator("#zoomLabel").textContent();
+  await phone.click("#zoomIn");
+  assert(await phone.locator("#zoomLabel").textContent() !== zoomBefore, "phone: the zoom buttons still work after a drag");
+  await phone.click("#zoomOut");
   await phone.click('.mark-btn[data-tool="check"]');
   const pp = await phone.locator(".page").first().boundingBox();
   await phone.touchscreen.tap(pp.x + pp.width * 0.5, pp.y + pp.height * 0.4);

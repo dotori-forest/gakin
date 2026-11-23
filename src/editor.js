@@ -1,5 +1,5 @@
 import { openDocument, DocumentError } from "./documentSources.js";
-import { exportFlatPdf, exportFlatImages } from "./exporter.js";
+import { exportFlatPdf, exportFlatImages, markedPages } from "./exporter.js";
 import { buildZip } from "./zip.js";
 import { SignaturePad, imageToStamp } from "./signaturePad.js";
 import { buildVectorSignature, signaturePaths, PEN_SIZES, PEN_COLORS } from "./strokes.js";
@@ -955,6 +955,44 @@ function setZoom(index, anchor) {
 // Ctrl + wheel (and trackpad pinch, which arrives as ctrl + wheel) zooms the
 // document around the pointer instead of zooming the whole browser page.
 let wheelDelta = 0;
+// The zoom bar can be dragged by its grip (or any spot that isn't a button), so it
+// never has to sit on the part of the page you are working on. It stays inside the
+// document area, also after the window or phone turns.
+{
+  const bar = $("viewerTools");
+  const area = bar.parentElement;
+  let pos = null; // left/top inside the document area, once moved
+  const place = () => {
+    if (!pos || bar.hidden) return;
+    pos.x = Math.max(4, Math.min(area.clientWidth - bar.offsetWidth - 4, pos.x));
+    pos.y = Math.max(4, Math.min(area.clientHeight - bar.offsetHeight - 4, pos.y));
+    Object.assign(bar.style, { left: `${pos.x}px`, top: `${pos.y}px`, right: "auto", bottom: "auto" });
+  };
+  bar.addEventListener("pointerdown", e => {
+    if (e.button !== 0 || e.target.closest("button")) return;
+    e.preventDefault();
+    const box = bar.getBoundingClientRect();
+    const offX = e.clientX - box.left, offY = e.clientY - box.top;
+    bar.classList.add("dragging");
+    const move = ev => {
+      const areaBox = area.getBoundingClientRect();
+      pos = { x: ev.clientX - areaBox.left - offX, y: ev.clientY - areaBox.top - offY };
+      place();
+    };
+    // On the window, so a fast finger that slips off the bar still moves it.
+    const end = () => {
+      bar.classList.remove("dragging");
+      removeEventListener("pointermove", move);
+      removeEventListener("pointerup", end);
+      removeEventListener("pointercancel", end);
+    };
+    addEventListener("pointermove", move);
+    addEventListener("pointerup", end);
+    addEventListener("pointercancel", end);
+  });
+  new ResizeObserver(place).observe(area);
+}
+
 $("viewer").addEventListener("wheel", e => {
   if (!e.ctrlKey && !e.metaKey) return;
   e.preventDefault();
@@ -1427,9 +1465,10 @@ document.addEventListener("keydown", e => {
 
 // 저장 | ⋯ : PDF on computers, JPG images on phones and tablets (they go straight
 // to the photo library or a chat app); the ⋯ menu offers PDF, PNG and JPG.
-const SAVE_LABELS = { pdf: "PDF로 저장", jpg: "이미지로 저장" };
+const SAVE_LABELS = { pdf: "PDF로 저장", png: "이미지로 저장" };
 const IMAGE_FORMATS = { png: { ext: "png", type: "image/png" }, jpg: { ext: "jpg", type: "image/jpeg" } };
-const defaultFormat = coarsePointer.matches ? "jpg" : "pdf";
+// Phones save PNG pages by default: sharp text, and the photo library keeps them as is.
+const defaultFormat = coarsePointer.matches ? "png" : "pdf";
 $("saveLabel").textContent = SAVE_LABELS[defaultFormat];
 const closeSaveMenu = popupMenu($("moreSaveBtn"), $("saveMenu"), $("saveGroup"));
 
@@ -1437,10 +1476,11 @@ const savedName = () => `${state.doc.name.replace(/\.[^.]+$/, "")}_서명`;
 
 // Phones: the share sheet (사진에 저장, 카카오톡 …). Computers: a download,
 // zipped when there is more than one page.
-async function deliverImages(blobs, { ext, type }) {
+// Several images are named by their page number (문서_서명_3.png).
+async function deliverImages(images, { ext, type }) {
   const base = savedName();
-  const names = blobs.length === 1 ? [`${base}.${ext}`] : blobs.map((_, i) => `${base}_${i + 1}.${ext}`);
-  const files = blobs.map((blob, i) => new File([blob], names[i], { type }));
+  const names = images.length === 1 ? [`${base}.${ext}`] : images.map(({ page }) => `${base}_${page + 1}.${ext}`);
+  const files = images.map(({ blob }, i) => new File([blob], names[i], { type }));
   if (coarsePointer.matches && navigator.canShare?.({ files })) {
     const share = async () => {
       try {
@@ -1494,7 +1534,10 @@ async function save(format = defaultFormat) {
       onProgress: (done, total) => busy(`${label}로 저장하는 중… (${done}/${total}쪽)`, done / total),
     };
     if (image) {
-      blobs = await exportFlatImages(state.doc, state.items, signatures, { ...opts, type: image.type });
+      // Images go out one per page, so only the pages that were signed or marked;
+      // a document with nothing on it saves every page.
+      const marked = markedPages(state.doc, state.items, signatures);
+      blobs = await exportFlatImages(state.doc, state.items, signatures, { ...opts, type: image.type, pages: marked.length ? marked : undefined });
     } else {
       downloadBlob(await exportFlatPdf(state.doc, state.items, signatures, opts), `${savedName()}.pdf`);
     }

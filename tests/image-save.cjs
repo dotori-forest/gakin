@@ -1,5 +1,5 @@
 // PNG·JPG로 저장: computers get a .png/.jpg (or a .zip of them for several pages),
-// phones get 이미지로 저장 (JPG) as the main button and the share sheet.
+// phones get 이미지로 저장 (PNG) as the main button and the share sheet.
 // The ⋯ menus also open when the mouse rests on ⋯.
 const { chromium, devices } = require("playwright");
 const fs = require("fs");
@@ -94,6 +94,21 @@ async function saveWithoutStamps(page, trigger) {
   assert(entries.length === 2 && entries[0].name === "two_서명_1.jpg" && entries[1].name === "two_서명_2.jpg", `zip holds one JPEG per page (${entries.map(e => e.name)})`);
   assert(entries.every(e => isJpeg(e.data)), "zip entries are whole JPEGs");
 
+  // Once something is placed, images cover only the signed/marked pages; PDF keeps them all.
+  await page.click('.mark-btn[data-tool="check"]');
+  const second = page.locator(".page").nth(1);
+  await second.scrollIntoViewIfNeeded();
+  await second.click({ position: { x: 200, y: 200 } });
+  assert(await page.locator(".item.is-shape").count() === 1, "a check mark sits on page 2");
+  await page.click("#moreSaveBtn");
+  const [markedDl] = await Promise.all([page.waitForEvent("download"), page.click("#savePngItem")]);
+  assert(markedDl.suggestedFilename() === "two_서명.png", `only the marked page 2 is saved, as one image (${markedDl.suggestedFilename()})`);
+  await page.click("#moreSaveBtn");
+  const [allPdf] = await Promise.all([page.waitForEvent("download"), page.click("#savePdfItem")]);
+  await allPdf.saveAs(`${S}/two-marked.pdf`);
+  const pdfPages = (fs.readFileSync(`${S}/two-marked.pdf`, "latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
+  assert(pdfPages === 2, `PDF still saves both pages (${pdfPages})`);
+
   await page.setInputFiles("#fileInput", `${S}/one.pdf`);
   await page.waitForFunction(() => document.querySelector("#docName").textContent === "one.pdf");
   await page.waitForSelector(".page canvas");
@@ -130,7 +145,7 @@ async function saveWithoutStamps(page, trigger) {
   await saveWithoutStamps(pp, () => pp.tap("#saveBtn"));
   await pp.waitForFunction(() => window.__shared.length === 1);
   const shared = await pp.evaluate(() => window.__shared[0]);
-  assert(shared.length === 2 && shared.every(f => f.type === "image/jpeg" && f.size > 0) && shared[0].name === "two_서명_1.jpg", `phone: pages go to the share sheet as JPEGs (${shared.map(f => f.name)})`);
+  assert(shared.length === 2 && shared.every(f => f.type === "image/png" && f.size > 0) && shared[0].name === "two_서명_1.png", `phone: pages go to the share sheet as PNGs (${shared.map(f => f.name)})`);
   await pp.tap("#moreSaveBtn");
   const menu = await pp.locator("#saveMenu").boundingBox();
   assert(menu && menu.x >= 0 && menu.x + menu.width <= 390 && menu.y > 0, "phone: the save menu opens below the button, on screen");

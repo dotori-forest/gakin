@@ -46,10 +46,21 @@ function canvasToBlob(canvas, type, quality) {
 }
 
 // Renders every page with its stamps as a JPEG (or PNG), one page at a time.
-async function* flatPages(doc, items, signatures, { dpi = 200, quality = 0.9, type = "image/jpeg", onProgress } = {}) {
+// An item that actually draws something (an empty text box or a deleted signature doesn't).
+const isDrawable = (item, signatures) =>
+  item.kind === "text" ? Boolean(item.text) : item.kind === "shape" || signatures.has(item.sigId);
+
+/** Indexes of the pages that carry at least one signature, text or mark. */
+export function markedPages(doc, items, signatures) {
+  const marked = new Set(items.filter(item => isDrawable(item, signatures)).map(item => item.page));
+  return [...Array(doc.pageCount).keys()].filter(i => marked.has(i));
+}
+
+async function* flatPages(doc, items, signatures, { dpi = 200, quality = 0.9, type = "image/jpeg", pages, onProgress } = {}) {
   const canvas = document.createElement("canvas");
+  const indexes = pages ?? [...Array(doc.pageCount).keys()];
   try {
-    for (let i = 0; i < doc.pageCount; i++) {
+    for (const [n, i] of indexes.entries()) {
       // Browsers (Safari on iOS especially) refuse canvases much over ~16.7 MP,
       // so very large pages are written slightly below the chosen dpi.
       const size = doc.pageSize(i);
@@ -59,12 +70,11 @@ async function* flatPages(doc, items, signatures, { dpi = 200, quality = 0.9, ty
       for (const item of items) {
         if (item.page !== i) continue;
         const sig = signatures.get(item.sigId);
-        const drawable = item.kind === "text" ? Boolean(item.text) : item.kind === "shape" || Boolean(sig);
-        if (drawable) await drawItem(ctx, item, sig, scale);
+        if (isDrawable(item, signatures)) await drawItem(ctx, item, sig, scale);
       }
       const blob = await canvasToBlob(canvas, type, quality);
-      yield { blob, pxWidth: canvas.width, pxHeight: canvas.height, ptWidth: size.width, ptHeight: size.height };
-      onProgress?.(i + 1, doc.pageCount);
+      yield { blob, page: i, pxWidth: canvas.width, pxHeight: canvas.height, ptWidth: size.width, ptHeight: size.height };
+      onProgress?.(n + 1, indexes.length);
     }
   } finally {
     canvas.width = canvas.height = 0;
@@ -79,15 +89,18 @@ async function* flatPages(doc, items, signatures, { dpi = 200, quality = 0.9, ty
  */
 export async function exportFlatPdf(doc, items, signatures, opts = {}) {
   const pages = [];
-  for await (const { blob, ...page } of flatPages(doc, items, signatures, { ...opts, type: "image/jpeg" })) {
+  for await (const { blob, page: _index, ...page } of flatPages(doc, items, signatures, { ...opts, type: "image/jpeg" })) {
     pages.push({ jpeg: new Uint8Array(await blob.arrayBuffer()), ...page });
   }
   return buildImagePdf(pages, { title: doc.name.replace(/\.[^.]+$/, "") });
 }
 
-/** Same pages as exportFlatPdf, as one image blob per page (opts.type: image/jpeg or image/png). */
+/**
+ * Pages as images (opts.type: image/jpeg or image/png), all of them or only opts.pages.
+ * @returns {Promise<{blob: Blob, page: number}[]>} page is the 0-based page index
+ */
 export async function exportFlatImages(doc, items, signatures, opts = {}) {
   const images = [];
-  for await (const { blob } of flatPages(doc, items, signatures, opts)) images.push(blob);
+  for await (const { blob, page } of flatPages(doc, items, signatures, opts)) images.push({ blob, page });
   return images;
 }
