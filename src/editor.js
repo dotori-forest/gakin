@@ -127,7 +127,10 @@ function renderSidebar() {
     card.setAttribute("aria-pressed", String(sig.id === state.armedId));
     const thumb = document.createElement("span");
     thumb.className = "sig-thumb";
-    thumb.append(signatureVisual(sig));
+    const visual = signatureVisual(sig);
+    // The thumbnail SVG fills the box (Safari draws a size-less SVG at 0×0), so keep its proportions here.
+    if (visual instanceof SVGElement) visual.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    thumb.append(visual);
     const name = document.createElement("span");
     name.className = "sig-name";
     name.textContent = sig.name;

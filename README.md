@@ -79,7 +79,7 @@
 
 ## 테스트
 
-Playwright와 Chromium이 필요합니다. 출력 PDF 검사에는 `pdfinfo`·`pdftotext`(poppler-utils)를 사용합니다.
+Playwright와 Chromium이 필요합니다. WebKit(`npx playwright install webkit`)이 있으면 아이폰 Safari에서 서명 목록이 보이는지도 확인합니다(없으면 건너뜁니다). 출력 PDF 검사에는 `pdfinfo`·`pdftotext`(poppler-utils)를 사용합니다.
 
 처음 한 번 설치합니다.
 

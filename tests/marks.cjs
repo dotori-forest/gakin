@@ -1,7 +1,7 @@
 // 글자·표시 넣기: text (typed, today's date, my name) and marks (check,
 // circle, cross) are placed, edited, moved, resized, restyled and undone like
 // stamps, and the saved PDF draws them where they were placed.
-const { chromium, devices } = require("playwright");
+const { chromium, webkit, devices } = require("playwright");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
@@ -232,6 +232,20 @@ const NAME_SIG = { id: "n1", kind: "image", name: "김길동", width: 2, height:
   assert(await phone.locator(".item.is-text .mark-text").textContent() === "확인", "phone: typed text stays after finishing");
   await phone.screenshot({ path: `${S}/phone.png` });
   await ctx.close();
+
+  // ---------- iPhone Safari (WebKit): a size-less SVG draws at 0×0 there, so the card thumbnail must be sized ----------
+  let wk = null;
+  try { wk = await webkit.launch(); } catch { console.log("skip - WebKit not installed (npx playwright install webkit)"); }
+  if (wk) {
+    const wctx = await wk.newContext({ ...devices["iPhone 13"], defaultBrowserType: undefined });
+    const wp = await wctx.newPage();
+    await wp.goto(url);
+    await wp.evaluate(sigs => localStorage.setItem("gakin.signatures", JSON.stringify(sigs)), [SIG]);
+    await wp.reload();
+    const t = await wp.evaluate(() => { const r = document.querySelector(".sig-thumb svg").getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; });
+    assert(t[0] > 40 && t[1] > 20, `iPhone Safari: the signature card shows the signature (${t.join("×")})`);
+    await wk.close();
+  }
 
   assert(errors.length === 0, `no page errors ${JSON.stringify(errors)}`);
   console.log("artifacts:", S);
