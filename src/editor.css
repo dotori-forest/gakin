@@ -354,14 +354,17 @@ html[data-platform="extension"] .web-only { display: none; }
     padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); border-right: 0;
   }
   .sidebar > h2, #sigHint { display: none; }
-  .sig-list { display: flex; flex: 1 1 0; gap: 8px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .sig-list { display: flex; flex: 1 1 100%; gap: 8px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .sig-list:empty { display: none; }
   .sig-list li { flex: none; width: 116px; }
   .sig-card { height: 64px; padding: 6px 8px 18px; border-radius: 12px; }
   .sig-thumb { height: 36px; }
   .sig-thumb svg, .sig-thumb img { max-height: 36px; }
   .sig-name { left: 9px; right: 30px; bottom: 3px; font-size: 11px; }
   .sig-delete { top: 2px; right: 2px; width: 26px; height: 26px; }
-  .sidebar-actions { display: flex; flex: none; gap: 4px; }
+  /* Its two parts join the tool row: 서명 그리기|⋯ at the start, the gear at the end. */
+  .sidebar-actions { display: contents; }
+  .sig-make, .settings-toggle { flex: none; }
   .sidebar-actions .btn { width: 44px; min-height: 44px; padding: 0; justify-content: center; border-color: var(--line-strong); background: var(--neutral); }
   .sidebar-actions .btn-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
   .settings-toggle { display: inline-flex; }
@@ -374,15 +377,16 @@ html[data-platform="extension"] .web-only { display: none; }
   .sig-make .btn { min-height: 42px; border: 0; background: transparent; }
   .sig-make .more-btn { width: 34px; }
   .sig-make .btn:hover:not(:disabled), .sig-make .more-btn[aria-expanded="true"] { background: var(--neutral-hover); }
-  .sig-menu { top: auto; bottom: calc(100% + 8px); right: 0; }
-  .mark-tools { display: flex; flex-basis: 100%; align-items: center; gap: 6px; margin-top: 0; padding-top: 8px; border-top: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
-  .mark-grid { display: flex; flex: none; }
-  .mark-btn { width: 42px; height: 40px; }
-  /* Same bar as before: signatures, then the buttons, then the tools row. */
+  .sig-menu { top: auto; bottom: calc(100% + 8px); left: 0; right: auto; }
+  .mark-tools { display: flex; flex: 1 1 0; min-width: 0; margin-top: 0; padding-top: 0; }
+  .mark-grid { display: flex; flex: 1; gap: 4px; }
+  .mark-btn { flex: 1 1 0; min-width: 0; max-width: 46px; height: 44px; }
+  /* Signatures on the top line; 서명 그리기|⋯, the six tools and the gear on one line below. */
   .sig-list { order: 1; }
-  .sidebar-actions { order: 2; }
+  .sig-make { order: 2; }
   .mark-tools { order: 3; }
-  .sidebar-foot { order: 4; }
+  .settings-toggle { order: 4; }
+  .sidebar-foot { order: 5; }
   .sidebar.settings-open .sidebar-foot { display: grid; }
   .sidebar-section { padding-top: 12px; }
 
@@ -394,10 +398,11 @@ html[data-platform="extension"] .web-only { display: none; }
   .sheet-dialog { padding: 22px 18px; }
 }
 
-/* Small phones (≈320–400px): slimmer buttons so a whole signature card fits. */
+/* Small phones (≈320–400px): slimmer buttons so the whole tool row fits on one line. */
 @media (max-width: 400px) {
-  .sidebar-actions { gap: 2px; }
+  .sidebar { column-gap: 6px; }
   .sidebar-actions .btn { width: 38px; }
   .sig-make .more-btn { width: 30px; }
+  .mark-grid { gap: 3px; }
   .sig-list li { width: 108px; }
 }

@@ -207,9 +207,14 @@ const NAME_SIG = { id: "n1", kind: "image", name: "김길동", width: 2, height:
   await phone.waitForSelector(".page canvas");
   const row = await phone.evaluate(() => {
     const r = q => document.querySelector(q).getBoundingClientRect();
-    return { tools: r(".mark-tools"), sidebar: r(".sidebar"), scrollW: document.documentElement.scrollWidth, w: innerWidth };
+    const last = [...document.querySelectorAll(".mark-btn")].pop().getBoundingClientRect();
+    return { tools: r(".mark-tools"), make: r(".sig-make"), gear: r("#settingsToggle"), list: r("#sigList"), last, sidebar: r(".sidebar"), scrollW: document.documentElement.scrollWidth, w: innerWidth };
   });
   assert(row.tools.height < 60 && row.tools.bottom <= row.sidebar.bottom && row.scrollW <= row.w, "phone: the tools are one row in the bottom bar");
+  const mid = q => Math.round(q.top + q.height / 2);
+  assert(mid(row.make) === mid(row.tools) && mid(row.gear) === mid(row.tools) && row.make.right <= row.tools.left && row.last.right <= row.gear.left && row.gear.right <= row.w,
+    "phone: 서명 그리기|⋯, the six tools and the gear share one line, in that order");
+  assert(row.list.bottom <= row.tools.top, "phone: the saved signatures sit on the line above");
   assert(await phone.locator('.mark-btn[data-tool="name"]').isDisabled(), "phone: 이름 waits until a name signature exists");
   await phone.click("#moreSigBtn");
   const menu = await phone.locator("#sigMenu").boundingBox();
