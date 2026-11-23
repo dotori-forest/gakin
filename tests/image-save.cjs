@@ -1,5 +1,6 @@
-// 이미지로 저장: computers get a .jpg (or a .zip of them for several pages),
-// phones get 이미지로 저장 as the main button and the share sheet.
+// PNG·JPG로 저장: computers get a .png/.jpg (or a .zip of them for several pages),
+// phones get 이미지로 저장 (JPG) as the main button and the share sheet.
+// The ⋯ menus also open when the mouse rests on ⋯.
 const { chromium, devices } = require("playwright");
 const fs = require("fs");
 const path = require("path");
@@ -18,6 +19,7 @@ function serve() {
   return new Promise(r => server.listen(0, () => r(server)));
 }
 function assert(cond, msg) { if (!cond) { console.error("FAIL:", msg); process.exitCode = 1; } else console.log("ok -", msg); }
+const isPng = buf => buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
 const isJpeg = buf => buf[0] === 0xff && buf[1] === 0xd8 && buf[buf.length - 2] === 0xff && buf[buf.length - 1] === 0xd9;
 
 // Reads the stored entries of a zip from its central directory.
@@ -62,12 +64,30 @@ async function saveWithoutStamps(page, trigger) {
   assert(await page.locator("#moreSaveBtn").isDisabled(), "⋯ disabled before a file is open");
   await page.setInputFiles("#fileInput", `${S}/two.pdf`);
   await page.waitForSelector(".page canvas");
+  // resting the mouse on ⋯ opens the menu; leaving the button and the menu closes it
+  await page.hover("#moreSaveBtn");
+  assert(await page.locator("#saveMenu").isVisible(), "hovering ⋯ opens the save menu");
+  const items = (await page.locator("#saveMenu .menu-item").allTextContents()).map(t => t.trim());
+  assert(items.join("|") === "PDF로 저장|PNG로 저장|JPG로 저장", `the save menu offers PDF, PNG and JPG (${items.join(", ")})`);
+  await page.hover("#saveJpgItem");
+  await page.waitForTimeout(400);
+  assert(await page.locator("#saveMenu").isVisible(), "moving from ⋯ down into the menu keeps it open");
+  await page.mouse.move(640, 600);
+  await page.waitForTimeout(450);
+  assert(await page.locator("#saveMenu").isHidden(), "moving the mouse away closes a hover-opened menu");
+  await page.hover("#moreSigBtn");
+  assert(await page.locator("#sigMenu").isVisible(), "hovering the ⋯ in 서명 그리기 opens its menu too");
+  await page.click("#moreSigBtn");
+  await page.mouse.move(640, 600);
+  await page.waitForTimeout(450);
+  assert(await page.locator("#sigMenu").isVisible() && await page.evaluate(() => document.activeElement.id) === "nameSigBtn", "clicking ⋯ after hovering keeps the menu open (focus on the first item)");
+  await page.keyboard.press("Escape");
   await page.click("#moreSaveBtn");
   assert(await page.locator("#saveMenu").isVisible(), "⋯ opens the save menu");
   await page.keyboard.press("Escape");
   assert(await page.locator("#saveMenu").isHidden() && await page.evaluate(() => document.activeElement.id) === "moreSaveBtn", "Escape closes the menu and returns focus");
   await page.click("#moreSaveBtn");
-  const [zipDl] = await Promise.all([page.waitForEvent("download"), saveWithoutStamps(page, () => page.click("#saveImageItem"))]);
+  const [zipDl] = await Promise.all([page.waitForEvent("download"), saveWithoutStamps(page, () => page.click("#saveJpgItem"))]);
   assert(zipDl.suggestedFilename() === "two_서명.zip", `two pages download as one zip (${zipDl.suggestedFilename()})`);
   await zipDl.saveAs(`${S}/two.zip`);
   const entries = zipEntries(fs.readFileSync(`${S}/two.zip`));
@@ -78,10 +98,15 @@ async function saveWithoutStamps(page, trigger) {
   await page.waitForFunction(() => document.querySelector("#docName").textContent === "one.pdf");
   await page.waitForSelector(".page canvas");
   await page.click("#moreSaveBtn");
-  const [jpgDl] = await Promise.all([page.waitForEvent("download"), saveWithoutStamps(page, () => page.click("#saveImageItem"))]);
+  const [jpgDl] = await Promise.all([page.waitForEvent("download"), saveWithoutStamps(page, () => page.click("#saveJpgItem"))]);
   assert(jpgDl.suggestedFilename() === "one_서명.jpg", `one page downloads as a .jpg (${jpgDl.suggestedFilename()})`);
   await jpgDl.saveAs(`${S}/one.jpg`);
   assert(isJpeg(fs.readFileSync(`${S}/one.jpg`)), "the .jpg is a JPEG");
+  await page.click("#moreSaveBtn");
+  const [pngDl] = await Promise.all([page.waitForEvent("download"), saveWithoutStamps(page, () => page.click("#savePngItem"))]);
+  assert(pngDl.suggestedFilename() === "one_서명.png", `PNG로 저장 downloads a .png (${pngDl.suggestedFilename()})`);
+  await pngDl.saveAs(`${S}/one.png`);
+  assert(isPng(fs.readFileSync(`${S}/one.png`)), "the .png is a PNG");
   await page.click("#moreSaveBtn");
   const [pdfDl] = await Promise.all([page.waitForEvent("download"), saveWithoutStamps(page, () => page.click("#savePdfItem"))]);
   assert(pdfDl.suggestedFilename() === "one_서명.pdf", "the menu still saves a PDF");

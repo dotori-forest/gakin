@@ -421,19 +421,46 @@ async function addSignature(sig) {
 $("newSigBtn").addEventListener("click", openPad);
 
 // A ⋯ button that opens a small menu, closed by Escape, Tab or a click elsewhere.
+// With a mouse, resting on ⋯ opens it too, and leaving the button and menu closes it.
+const HOVER_CLOSE_MS = 300;
 function popupMenu(button, menu, container) {
-  const open = () => {
+  let byHover = false;
+  let leaveTimer = 0;
+  const focusFirst = () => menu.querySelector(".menu-item:not(:disabled)")?.focus();
+  const open = ({ focus = true } = {}) => {
+    clearTimeout(leaveTimer);
     menu.hidden = false;
     button.setAttribute("aria-expanded", "true");
-    menu.querySelector(".menu-item:not(:disabled)")?.focus();
+    if (focus) focusFirst();
   };
   const close = ({ focusButton = false } = {}) => {
+    clearTimeout(leaveTimer);
+    byHover = false;
     if (menu.hidden) return;
     menu.hidden = true;
     button.setAttribute("aria-expanded", "false");
     if (focusButton) button.focus();
   };
-  button.addEventListener("click", () => (menu.hidden ? open() : close()));
+  button.addEventListener("click", () => {
+    if (menu.hidden) open();
+    else if (byHover) { byHover = false; clearTimeout(leaveTimer); focusFirst(); } // hover opened it: the click keeps it open
+    else close();
+  });
+  button.addEventListener("pointerenter", e => {
+    if (e.pointerType !== "mouse" || button.disabled) return;
+    clearTimeout(leaveTimer);
+    if (menu.hidden) { byHover = true; open({ focus: false }); }
+  });
+  menu.addEventListener("pointerenter", () => clearTimeout(leaveTimer));
+  for (const el of [button, menu]) {
+    el.addEventListener("pointerleave", e => {
+      if (e.pointerType !== "mouse" || !byHover) return;
+      clearTimeout(leaveTimer);
+      leaveTimer = setTimeout(() => {
+        if (!button.matches(":hover") && !menu.matches(":hover")) close();
+      }, HOVER_CLOSE_MS);
+    });
+  }
   menu.addEventListener("keydown", e => {
     const items = [...menu.querySelectorAll(".menu-item:not(:disabled)")];
     const i = items.indexOf(document.activeElement);
@@ -1387,10 +1414,11 @@ document.addEventListener("keydown", e => {
 
 // ---------- save ----------
 
-// 저장 | ⋯ : PDF on computers, images on phones and tablets (they go straight
-// to the photo library or a chat app); the ⋯ menu offers both.
-const SAVE_LABELS = { pdf: "PDF로 저장", image: "이미지로 저장" };
-const defaultFormat = coarsePointer.matches ? "image" : "pdf";
+// 저장 | ⋯ : PDF on computers, JPG images on phones and tablets (they go straight
+// to the photo library or a chat app); the ⋯ menu offers PDF, PNG and JPG.
+const SAVE_LABELS = { pdf: "PDF로 저장", jpg: "이미지로 저장" };
+const IMAGE_FORMATS = { png: { ext: "png", type: "image/png" }, jpg: { ext: "jpg", type: "image/jpeg" } };
+const defaultFormat = coarsePointer.matches ? "jpg" : "pdf";
 $("saveLabel").textContent = SAVE_LABELS[defaultFormat];
 const closeSaveMenu = popupMenu($("moreSaveBtn"), $("saveMenu"), $("saveGroup"));
 
@@ -1398,10 +1426,10 @@ const savedName = () => `${state.doc.name.replace(/\.[^.]+$/, "")}_서명`;
 
 // Phones: the share sheet (사진에 저장, 카카오톡 …). Computers: a download,
 // zipped when there is more than one page.
-async function deliverImages(blobs) {
+async function deliverImages(blobs, { ext, type }) {
   const base = savedName();
-  const names = blobs.length === 1 ? [`${base}.jpg`] : blobs.map((_, i) => `${base}_${i + 1}.jpg`);
-  const files = blobs.map((blob, i) => new File([blob], names[i], { type: "image/jpeg" }));
+  const names = blobs.length === 1 ? [`${base}.${ext}`] : blobs.map((_, i) => `${base}_${i + 1}.${ext}`);
+  const files = blobs.map((blob, i) => new File([blob], names[i], { type }));
   if (coarsePointer.matches && navigator.canShare?.({ files })) {
     const share = async () => {
       try {
@@ -1433,10 +1461,11 @@ async function deliverImages(blobs) {
 
 async function save(format = defaultFormat) {
   if (!state.doc) return;
-  const label = format === "image" ? "이미지" : "PDF";
+  const image = IMAGE_FORMATS[format];
+  const label = image ? format.toUpperCase() : "PDF";
   if (state.items.length === 0 && !(await askConfirm({
     title: "서명 없이 저장할까요?",
-    description: format === "image"
+    description: image
       ? "문서에 찍힌 서명이 없습니다. 그대로 이미지로 저장합니다."
       : "문서에 찍힌 서명이 없습니다. 그대로 편집할 수 없는 PDF로 저장합니다.",
     confirmLabel: "그대로 저장",
@@ -1453,8 +1482,8 @@ async function save(format = defaultFormat) {
       dpi,
       onProgress: (done, total) => busy(`${label}로 저장하는 중… (${done}/${total}쪽)`, done / total),
     };
-    if (format === "image") {
-      blobs = await exportFlatImages(state.doc, state.items, signatures, opts);
+    if (image) {
+      blobs = await exportFlatImages(state.doc, state.items, signatures, { ...opts, type: image.type });
     } else {
       downloadBlob(await exportFlatPdf(state.doc, state.items, signatures, opts), `${savedName()}.pdf`);
     }
@@ -1466,7 +1495,7 @@ async function save(format = defaultFormat) {
     $("busyNote").hidden = true;
     busy(null);
   }
-  const message = blobs ? await deliverImages(blobs) : "저장했습니다. 다운로드 폴더를 확인하세요.";
+  const message = blobs ? await deliverImages(blobs, image) : "저장했습니다. 다운로드 폴더를 확인하세요.";
   if (!message) return;
   state.savedItems = itemsKey(state.items);
   state.dirty = false;

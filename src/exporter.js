@@ -39,14 +39,14 @@ export async function drawItem(ctx, item, sig, scale) {
   ctx.restore();
 }
 
-function canvasToJpeg(canvas, quality) {
+function canvasToBlob(canvas, type, quality) {
   return new Promise((resolve, reject) => {
-    canvas.toBlob(blob => (blob ? resolve(blob) : reject(new Error("JPEG 변환 실패"))), "image/jpeg", quality);
+    canvas.toBlob(blob => (blob ? resolve(blob) : reject(new Error("이미지 변환 실패"))), type, quality);
   });
 }
 
-// Renders every page with its stamps as a JPEG, one page at a time.
-async function* flatPages(doc, items, signatures, { dpi = 200, quality = 0.9, onProgress } = {}) {
+// Renders every page with its stamps as a JPEG (or PNG), one page at a time.
+async function* flatPages(doc, items, signatures, { dpi = 200, quality = 0.9, type = "image/jpeg", onProgress } = {}) {
   const canvas = document.createElement("canvas");
   try {
     for (let i = 0; i < doc.pageCount; i++) {
@@ -62,7 +62,7 @@ async function* flatPages(doc, items, signatures, { dpi = 200, quality = 0.9, on
         const drawable = item.kind === "text" ? Boolean(item.text) : item.kind === "shape" || Boolean(sig);
         if (drawable) await drawItem(ctx, item, sig, scale);
       }
-      const blob = await canvasToJpeg(canvas, quality);
+      const blob = await canvasToBlob(canvas, type, quality);
       yield { blob, pxWidth: canvas.width, pxHeight: canvas.height, ptWidth: size.width, ptHeight: size.height };
       onProgress?.(i + 1, doc.pageCount);
     }
@@ -79,13 +79,13 @@ async function* flatPages(doc, items, signatures, { dpi = 200, quality = 0.9, on
  */
 export async function exportFlatPdf(doc, items, signatures, opts = {}) {
   const pages = [];
-  for await (const { blob, ...page } of flatPages(doc, items, signatures, opts)) {
+  for await (const { blob, ...page } of flatPages(doc, items, signatures, { ...opts, type: "image/jpeg" })) {
     pages.push({ jpeg: new Uint8Array(await blob.arrayBuffer()), ...page });
   }
   return buildImagePdf(pages, { title: doc.name.replace(/\.[^.]+$/, "") });
 }
 
-/** Same pages as exportFlatPdf, as one JPEG blob per page. */
+/** Same pages as exportFlatPdf, as one image blob per page (opts.type: image/jpeg or image/png). */
 export async function exportFlatImages(doc, items, signatures, opts = {}) {
   const images = [];
   for await (const { blob } of flatPages(doc, items, signatures, opts)) images.push(blob);
