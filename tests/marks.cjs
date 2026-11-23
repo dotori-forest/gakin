@@ -229,6 +229,14 @@ const NAME_SIG = { id: "n1", kind: "image", name: "김길동", width: 2, height:
   const onTop = await phone.evaluate(({ x, y }) => Boolean(document.elementFromPoint(x, y)?.closest("#sigMenu")), { x: menu.x + menu.width / 2, y: menu.y + menu.height / 2 });
   assert(menu.y >= 0 && menu.y < bar.y && menu.x >= 0 && menu.x + menu.width <= row.w && onTop, "phone: the ⋯ menu opens upwards, on screen and on top");
   await phone.click("#moreSigBtn");
+  // With the settings open the bar is taller; the menu must still show whole, not clipped.
+  await phone.click("#settingsToggle");
+  await phone.click("#moreSigBtn");
+  const menu2 = await phone.locator("#sigMenu").boundingBox();
+  const corners = await phone.evaluate(({ x, y, w, h }) => [[x + 4, y + 4], [x + w - 4, y + h - 4]].every(([px, py]) => document.elementFromPoint(px, py)?.closest("#sigMenu")), { x: menu2.x, y: menu2.y, w: menu2.width, h: menu2.height });
+  assert(menu2.y >= 0 && corners, "phone: with the settings open, the ⋯ menu still shows whole");
+  await phone.click("#moreSigBtn");
+  await phone.click("#settingsToggle");
   await phone.click('.mark-btn[data-tool="check"]');
   const pp = await phone.locator(".page").first().boundingBox();
   await phone.touchscreen.tap(pp.x + pp.width * 0.5, pp.y + pp.height * 0.4);

@@ -391,7 +391,9 @@ html[data-platform="extension"] .web-only { display: none; }
   .sidebar-foot { display: none; flex-basis: 100%; margin-top: 0; padding-top: 4px; }
   /* The ⋯ menu opens upwards out of the bottom bar, so the bar must not clip it. */
   .sidebar { overflow: visible; }
-  .sidebar.settings-open { overflow-y: auto; }
+  /* The settings scroll inside their own box, not the whole bar: a scrolling bar
+     would clip the ⋯ menu that opens above it. 150px ≈ signatures + tool row. */
+  .sidebar.settings-open .sidebar-foot { max-height: calc(60dvh - 150px - env(safe-area-inset-bottom)); overflow-y: auto; }
   .sig-make #newSigBtn { flex: none; }
   .sig-make .btn { height: calc(var(--tool) - 2px); min-height: 0; border: 0; background: transparent; }
   .sig-make .more-btn { width: var(--more); }
