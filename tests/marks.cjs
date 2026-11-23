@@ -204,6 +204,8 @@ const NAME_SIG = { id: "n1", kind: "image", name: "김길동", width: 2, height:
   await phone.goto(url);
   await phone.evaluate(sigs => localStorage.setItem("gakin.signatures", JSON.stringify(sigs)), [SIG]);
   await phone.reload();
+  const idle = await phone.evaluate(() => ({ tools: [...document.querySelectorAll(".mark-btn")].every(b => b.disabled), save: document.querySelector("#saveBtn").disabled, bg: getComputedStyle(document.querySelector("#saveBtn")).backgroundColor }));
+  assert(idle.tools && idle.save && idle.bg === "rgb(238, 240, 243)", `phone: before a file is open the tools and save are disabled, save in plain grey (${JSON.stringify(idle)})`);
   await phone.setInputFiles("#fileInput", `${S}/form.pdf`);
   await phone.waitForSelector(".page canvas");
   const row = await phone.evaluate(() => {
@@ -218,6 +220,8 @@ const NAME_SIG = { id: "n1", kind: "image", name: "김길동", width: 2, height:
   assert(row.list.bottom <= row.tools.top, "phone: the saved signatures sit on the line above");
   const squares = await phone.evaluate(() => [...document.querySelectorAll(".mark-btn")].map(e => e.getBoundingClientRect()).every(r => r.width >= 30 && Math.abs(r.width - r.height) < 1));
   assert(squares, "phone: the six tool buttons are squares");
+  const sameH = Math.abs(row.make.height - row.last.height) < 1 && Math.abs(row.gear.height - row.last.height) < 1 && Math.abs(row.gear.width - row.gear.height) < 1;
+  assert(sameH, `phone: 서명 그리기|⋯ and the gear are as tall as the tools, the gear square (${row.make.height}, ${row.last.height}, ${row.gear.width}×${row.gear.height})`);
   assert(await phone.locator('.mark-btn[data-tool="name"]').isDisabled(), "phone: 이름 waits until a name signature exists");
   await phone.click("#moreSigBtn");
   const menu = await phone.locator("#sigMenu").boundingBox();

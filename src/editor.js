@@ -202,10 +202,18 @@ function updateMarkUi() {
   for (const btn of document.querySelectorAll(".mark-btn")) {
     btn.setAttribute("aria-pressed", String(state.armedTool === btn.dataset.tool));
   }
+  // Text and marks go onto a document, so the tools wait until one is open.
+  for (const btn of document.querySelectorAll(".mark-btn")) {
+    btn.disabled = !state.doc;
+    btn.dataset.title ??= btn.title;
+    btn.title = state.doc ? btn.dataset.title : "문서를 먼저 열어 주세요";
+  }
   const name = myName();
   const nameBtn = document.querySelector('.mark-btn[data-tool="name"]');
-  nameBtn.disabled = !name;
-  nameBtn.title = name ? `"${name}" 넣기` : "이름으로 만들기에서 이름을 먼저 정해 주세요";
+  if (state.doc) {
+    nameBtn.disabled = !name;
+    nameBtn.title = name ? `"${name}" 넣기` : "이름으로 만들기에서 이름을 먼저 정해 주세요";
+  }
 }
 
 for (const btn of document.querySelectorAll(".mark-btn")) {
@@ -764,6 +772,7 @@ async function loadFile(file) {
   $("docChip").hidden = false;
   $("empty").hidden = true;
   $("saveBtn").disabled = $("moreSaveBtn").disabled = false;
+  updateMarkUi();
   buildPages();
   updateZoomUi();
   $("viewer").scrollTop = 0;
@@ -803,6 +812,8 @@ async function closeDocument() {
   $("empty").hidden = false;
   closeSaveMenu();
   $("saveBtn").disabled = $("moreSaveBtn").disabled = true;
+  state.armedTool = null;
+  updateMarkUi();
   $("toast").hidden = true;
   updateZoomUi();
 }
