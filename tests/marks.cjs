@@ -50,6 +50,7 @@ const NAME_SIG = { id: "n1", kind: "image", name: "김길동", width: 2, height:
     return { make: r(".sig-make"), draw: r("#newSigBtn"), more: r("#moreSigBtn"), list: r("#sigList"), tools: r(".mark-tools"), foot: r("#sidebarFoot"), heading: Boolean(document.querySelector("#sidebarFoot h2")) };
   });
   assert(side.more.left >= side.draw.right - 1 && side.more.right <= side.make.right && side.more.top >= side.make.top && side.more.bottom <= side.make.bottom, "⋯ sits inside the 서명 그리기 button shape, after its label");
+  assert(await page.evaluate(() => [...document.querySelectorAll(".mark-btn")].map(e => e.getBoundingClientRect()).every(r => r.width >= 30 && Math.abs(r.width - r.height) < 1)), "desktop: the six tool buttons are squares");
   assert(side.list.bottom <= side.tools.top && side.tools.bottom <= side.foot.top && side.foot.top - side.tools.bottom < 40, "desktop: the tools row sits under the signatures, right above the settings");
   assert(!side.heading && await page.locator("#dpi").isVisible() && await page.locator("#exportSigBtn").isVisible(), "desktop: the settings rows show without a 설정 heading");
 
@@ -215,6 +216,8 @@ const NAME_SIG = { id: "n1", kind: "image", name: "김길동", width: 2, height:
   assert(mid(row.make) === mid(row.tools) && mid(row.gear) === mid(row.tools) && row.make.right <= row.tools.left && row.last.right <= row.gear.left && row.gear.right <= row.w,
     "phone: 서명 그리기|⋯, the six tools and the gear share one line, in that order");
   assert(row.list.bottom <= row.tools.top, "phone: the saved signatures sit on the line above");
+  const squares = await phone.evaluate(() => [...document.querySelectorAll(".mark-btn")].map(e => e.getBoundingClientRect()).every(r => r.width >= 30 && Math.abs(r.width - r.height) < 1));
+  assert(squares, "phone: the six tool buttons are squares");
   assert(await phone.locator('.mark-btn[data-tool="name"]').isDisabled(), "phone: 이름 waits until a name signature exists");
   await phone.click("#moreSigBtn");
   const menu = await phone.locator("#sigMenu").boundingBox();

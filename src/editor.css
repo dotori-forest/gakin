@@ -290,7 +290,7 @@ html[data-platform="extension"] .web-only { display: none; }
 /* Six icon buttons in a row; the names are tooltips and screen-reader labels. */
 .mark-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
 .mark-btn {
-  display: grid; place-items: center; min-width: 0; height: 36px; padding: 0;
+  display: grid; place-items: center; min-width: 0; aspect-ratio: 1; padding: 0;
   border: 1px solid #e4e7eb; border-radius: 10px; background: #fff; color: #344255;
 }
 .mark-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
@@ -351,7 +351,9 @@ html[data-platform="extension"] .web-only { display: none; }
   .doc-chip { flex: 1 1 auto; }
   .topbar .spacer { flex: 0 0 0; }
   /* margin-left:auto keeps 파일 열기·PDF로 저장 on the right even before a file is open. */
-  #openBtn { flex: none; width: 40px; margin-left: auto; padding: 0; }
+  /* 파일 열기 is a square icon button, as tall as 저장 | ⋯ next to it. */
+  #openBtn { flex: none; width: 38px; margin-left: auto; padding: 0; }
+  #openBtn, .save-split .btn { height: 38px; min-height: 38px; }
   #openBtn .btn-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
   #saveBtn { padding: 7px 10px 7px 12px; }
   .save-split .more-btn { width: 30px; }
@@ -389,7 +391,9 @@ html[data-platform="extension"] .web-only { display: none; }
   .sig-menu:not(.save-menu) { top: auto; bottom: calc(100% + 8px); left: 0; right: auto; }
   .mark-tools { display: flex; flex: 1 1 0; min-width: 0; margin-top: 0; padding-top: 0; }
   .mark-grid { display: flex; flex: 1; gap: 4px; }
-  .mark-btn { flex: 1 1 0; min-width: 0; max-width: 46px; height: 44px; }
+  /* Square buttons: as wide as the row allows, never taller than the 44px bar. */
+  .mark-btn { flex: 1 1 0; min-width: 0; max-width: 44px; height: auto; aspect-ratio: 1; }
+  .mark-grid { align-items: center; }
   /* Signatures on the top line; 서명 그리기|⋯, the six tools and the gear on one line below. */
   .sig-list { order: 1; }
   .sig-make { order: 2; }

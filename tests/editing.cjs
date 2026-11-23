@@ -306,9 +306,9 @@ const SIG = { id: "wide", kind: "vector", name: "서명", color: "#000000", size
   await sp.waitForSelector(".page canvas");
   const sizes = await sp.evaluate(() => {
     const r = q => document.querySelector(q).getBoundingClientRect();
-    return { open: r("#openBtn").width, save: r("#saveGroup").right, list: r("#sigList").width, card: r(".sig-list li").width, w: innerWidth };
+    return { open: r("#openBtn").width, openH: r("#openBtn").height, save: r("#saveGroup").right, list: r("#sigList").width, card: r(".sig-list li").width, w: innerWidth };
   });
-  assert(sizes.open >= 40 && sizes.save <= sizes.w, `320px: the open button keeps its size with a long file name (${sizes.open}px)`);
+  assert(sizes.open >= 36 && Math.abs(sizes.open - sizes.openH) < 1 && sizes.save <= sizes.w, `320px: the open button stays a square with a long file name (${sizes.open}×${sizes.openH}px)`);
   const gapAfter = await saveRight();
   assert(gapBefore === gapAfter && gapBefore <= 16, `320px: the save buttons stay at the right edge before and after a file opens (${gapBefore}px → ${gapAfter}px)`);
   assert(sizes.list >= sizes.card, `320px: a whole signature card fits in the bar (${sizes.list} ≥ ${sizes.card})`);
