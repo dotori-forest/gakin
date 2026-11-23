@@ -31,7 +31,7 @@
       <button type="button" id="closeDocBtn" class="doc-close" aria-label="문서 닫기"><span data-icon="x"></span><span class="doc-close-label" aria-hidden="true">닫기</span></button>
     </div>
     <div class="spacer"></div>
-    <button type="button" id="openBtn" class="btn"><span data-icon="file-up"></span><span class="btn-label">파일 열기</span></button>
+    <button type="button" id="openBtn" class="btn"><span data-icon="upload"></span><span class="btn-label">파일 열기</span></button>
     <input type="file" id="fileInput" accept=".pdf,application/pdf,image/png,image/jpeg,image/webp,.hwp,.hwpx" hidden>
     <div id="saveGroup" class="save-split">
       <button type="button" id="saveBtn" class="btn emphasis" disabled><span data-icon="download"></span><span id="saveLabel" class="btn-label">PDF로 저장</span></button>
@@ -63,7 +63,7 @@
       <section class="mark-tools" aria-labelledby="markTitle">
         <h2 id="markTitle" class="sr-only">글자·표시 넣기</h2>
         <div class="mark-grid" role="group" aria-label="넣을 것">
-          <button type="button" class="mark-btn" data-tool="text" title="글자" aria-pressed="false"><span data-icon="text-cursor-input"></span><span class="mark-label">글자</span></button>
+          <button type="button" class="mark-btn" data-tool="text" title="글자" aria-pressed="false"><span data-icon="languages"></span><span class="mark-label">글자</span></button>
           <button type="button" class="mark-btn" data-tool="date" title="오늘 날짜" aria-pressed="false"><span data-icon="calendar"></span><span class="mark-label">날짜</span></button>
           <button type="button" class="mark-btn" data-tool="name" title="이름" aria-pressed="false"><span data-icon="user-round"></span><span class="mark-label">이름</span></button>
           <button type="button" class="mark-btn" data-tool="check" title="체크" aria-pressed="false"><span data-icon="check"></span><span class="mark-label">체크</span></button>
@@ -107,7 +107,7 @@
         <div class="drop">
           <strong><span class="for-fine-pointer">서명할 문서를 여기에 끌어다 놓으세요</span><span class="for-coarse-pointer">서명할 문서를 열어 주세요</span></strong>
           <span>PDF · 한글(HWP·HWPX) · PNG · JPG · WebP</span>
-          <button type="button" id="emptyOpenBtn" class="btn emphasis"><span data-icon="file-up"></span>파일 열기</button>
+          <button type="button" id="emptyOpenBtn" class="btn emphasis"><span data-icon="upload"></span>파일 열기</button>
         </div>
       </div>
       <div id="pages" class="pages"></div>

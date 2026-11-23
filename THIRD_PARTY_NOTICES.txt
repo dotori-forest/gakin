@@ -11,7 +11,7 @@
 3. Lucide (lucide-static 1.75.0) — ISC License — https://lucide.dev
    vendor/lucide/LICENSE
    사용한 아이콘: calendar, check, chevron-down, circle, download, ellipsis, eraser,
-   file-up, image, minus, pen-line, plus, redo-2, rotate-cw, settings, stamp, text-cursor-input,
+   file-text, image, languages, minus, pen-line, plus, redo-2, rotate-cw, settings, stamp,
    trash-2, type, undo-2, upload, user-round, x
    (경로는 수정하지 않았습니다)
 
