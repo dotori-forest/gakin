@@ -54,6 +54,15 @@ const sigById = id => state.signatures.find(s => s.id === id);
 const itemsKey = items => JSON.stringify(items);
 function refreshDirty() {
   state.dirty = itemsKey(state.items) !== state.savedItems;
+  refreshSaveButton();
+}
+// 저장 works only once something is placed on the document: a page with
+// nothing on it has nothing to sign.
+function refreshSaveButton() {
+  const off = !state.doc || state.items.length === 0;
+  if (off) closeSaveMenu(); // only runs after start-up, once the menu exists
+  $("saveBtn").disabled = $("moreSaveBtn").disabled = off;
+  $("saveGroup").title = off && state.doc ? "서명이나 글자를 넣으면 저장할 수 있습니다" : "";
 }
 const scale = () => state.fitScale * ZOOM_STEPS[state.zoomIndex];
 
@@ -783,7 +792,7 @@ async function loadFile(file) {
   $("docName").title = doc.name;
   $("docChip").hidden = false;
   $("empty").hidden = true;
-  $("saveBtn").disabled = $("moreSaveBtn").disabled = false;
+  refreshSaveButton();
   updateMarkUi();
   buildPages();
   updateZoomUi();
@@ -822,8 +831,7 @@ async function closeDocument() {
   $("docName").title = "";
   $("docChip").hidden = true;
   $("empty").hidden = false;
-  closeSaveMenu();
-  $("saveBtn").disabled = $("moreSaveBtn").disabled = true;
+  refreshSaveButton();
   state.armedTool = null;
   updateMarkUi();
   $("toast").hidden = true;
@@ -1526,13 +1534,7 @@ async function save(format = defaultFormat) {
   if (!state.doc) return;
   const image = IMAGE_FORMATS[format];
   const label = image ? format.toUpperCase() : "PDF";
-  if (state.items.length === 0 && !(await askConfirm({
-    title: "서명 없이 저장할까요?",
-    description: image
-      ? "문서에 찍힌 서명이 없습니다. 그대로 이미지로 저장합니다."
-      : "문서에 찍힌 서명이 없습니다. 그대로 편집할 수 없는 PDF로 저장합니다.",
-    confirmLabel: "그대로 저장",
-  }))) return;
+  if (state.items.length === 0) return; // the button is off until something is placed
   select(null);
   arm(null);
   const dpi = Number($("dpi").value) || 200;

@@ -43,9 +43,12 @@ const ROOT = path.resolve(__dirname, "..");
   console.log("ok - name signature made with bundled fonts");
   await page.setInputFiles("#fileInput", pdf);
   await page.waitForSelector(".page canvas");
+  // 저장 is off until something is placed.
+  await page.click('.mark-btn[data-tool="check"]');
+  await page.locator(".page").first().click({ position: { x: 150, y: 150 } });
   const [download] = await Promise.all([
     page.waitForEvent("download"),
-    page.click("#saveBtn").then(() => page.click("#confirmation-confirm")),
+    page.click("#saveBtn"),
   ]);
   const name = download.suggestedFilename();
   console.log(name.endsWith("_서명.pdf") ? "ok" : "FAIL", "- download name", name);

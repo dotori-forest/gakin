@@ -93,6 +93,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, .item:focus-vis
 .sidebar h2 { margin: 0; color: #252b33; font-size: 16px; font-weight: 650; letter-spacing: -.02em; }
 .hint { margin: -4px 0 4px; color: #6a7480; font-size: 13px; line-height: 1.6; white-space: nowrap; }
 .sidebar-actions { display: grid; gap: 4px; }
+/* On desktop 서명 그리기 lives in the top bar, so the empty box would only add a gap. */
+.sidebar-actions:not(:has(.sig-make)) { display: none; }
 .sidebar-foot { display: grid; gap: 8px; padding-top: 4px; }
 .sidebar-foot .link-btn { justify-self: start; }
 .option-buttons { display: grid; grid-template-columns: auto 1fr; gap: 4px; }
@@ -265,8 +267,12 @@ html[data-platform="extension"] .web-only { display: none; }
 .sig-make #newSigBtn { flex: 1; min-width: 0; border-radius: 11px 0 0 11px; }
 .more-btn { position: relative; flex: none; width: 38px; padding: 0; border-radius: 0 11px 11px 0; color: #586574; }
 .more-btn::before { content: ""; position: absolute; top: 9px; bottom: 9px; left: 0; width: 1px; background: var(--line-strong); }
-.sig-make .btn:hover:not(:disabled), .more-btn[aria-expanded="true"] { background: var(--neutral-hover); }
-.sig-make .btn:focus-visible { outline-offset: -2px; }
+.sig-make .btn:focus-visible { outline-offset: -2px; outline-color: #fff; }
+/* Navy like 저장: drawing a signature is the main action, so it stands out. */
+.sig-make { border-color: var(--navy); background: var(--navy); }
+.sig-make .btn { color: #fff; font-weight: 680; }
+.sig-make .more-btn::before { background: rgba(255, 255, 255, .28); }
+.sig-make .btn:hover:not(:disabled), .sig-make .more-btn[aria-expanded="true"] { background: var(--navy-hover); }
 /* In the top bar it is a toolbar button like 파일 열기, and the menu drops below it. */
 .topbar .sig-make { flex: none; }
 .topbar .sig-make .more-btn { width: 34px; }
@@ -407,12 +413,6 @@ html[data-platform="extension"] .web-only { display: none; }
   .sig-make #newSigBtn { flex: none; }
   .sig-make .btn { height: calc(var(--tool) - 2px); min-height: 0; border: 0; background: transparent; }
   .sig-make .more-btn { width: var(--more); }
-  /* Navy like 이미지로 저장 at the top, so the main action stands out in the row. */
-  .sig-make { border-color: var(--navy); background: var(--navy); }
-  .sig-make .btn { color: #fff; }
-  .sig-make .more-btn::before { background: rgba(255, 255, 255, .28); }
-  .sig-make .btn:hover:not(:disabled), .sig-make .more-btn[aria-expanded="true"] { background: var(--navy-hover); }
-  .sig-make .btn:focus-visible { outline-color: #fff; }
   .sig-menu:not(.save-menu) { top: auto; bottom: calc(100% + 8px); left: 0; right: auto; }
   .mark-tools { display: flex; flex: 1 1 0; min-width: 0; margin-top: 0; padding-top: 0; }
   .mark-grid { display: flex; flex: 1; gap: var(--tool-gap); }

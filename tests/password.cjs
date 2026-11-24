@@ -86,9 +86,12 @@ function assert(cond, msg) { if (!cond) { console.error("FAIL:", msg); process.e
     assert(!firstRetry && secondRetry, `${ext}: wrong password asks again with a message`);
     assert(await page.locator(".page").count() === 2, `${ext}: right password opens both pages`);
 
+    // 저장 is off until something is placed.
+    await page.click('.mark-btn[data-tool="check"]');
+    await page.locator(".page").first().click({ position: { x: 150, y: 150 } });
     const [dl] = await Promise.all([
       page.waitForEvent("download"),
-      page.click("#saveBtn").then(() => page.click("#confirmation-confirm")),
+      page.click("#saveBtn"),
     ]);
     await dl.saveAs(`${S}/out-${ext}.pdf`);
     const out = fs.readFileSync(`${S}/out-${ext}.pdf`).toString("latin1");

@@ -39,9 +39,13 @@ function zipEntries(buf) {
   return entries;
 }
 
-async function saveWithoutStamps(page, trigger) {
-  await trigger();
-  await page.click("#confirmation-confirm");
+// Puts a check mark on page n (0-based); 저장 stays off until something is placed.
+async function markPage(page, n, { tap = false } = {}) {
+  const tool = page.locator('.mark-btn[data-tool="check"]');
+  const target = page.locator(".page").nth(n);
+  await target.scrollIntoViewIfNeeded();
+  if (tap) { await tool.tap(); await target.tap({ position: { x: 120, y: 120 } }); }
+  else { await tool.click(); await target.click({ position: { x: 200, y: 200 } }); }
 }
 
 (async () => {
@@ -64,6 +68,9 @@ async function saveWithoutStamps(page, trigger) {
   assert(await page.locator("#moreSaveBtn").isDisabled(), "⋯ disabled before a file is open");
   await page.setInputFiles("#fileInput", `${S}/two.pdf`);
   await page.waitForSelector(".page canvas");
+  assert(await page.locator("#saveBtn").isDisabled() && await page.locator("#moreSaveBtn").isDisabled(), "저장 stays off while nothing is placed");
+  await markPage(page, 1);
+  assert(await page.locator(".item.is-shape").count() === 1 && await page.locator("#saveBtn").isEnabled(), "placing a mark on page 2 turns 저장 on");
   // resting the mouse on ⋯ opens the menu; leaving the button and the menu closes it
   await page.hover("#moreSaveBtn");
   assert(await page.locator("#saveMenu").isVisible(), "hovering ⋯ opens the save menu");
@@ -86,20 +93,8 @@ async function saveWithoutStamps(page, trigger) {
   assert(await page.locator("#saveMenu").isVisible(), "⋯ opens the save menu");
   await page.keyboard.press("Escape");
   assert(await page.locator("#saveMenu").isHidden() && await page.evaluate(() => document.activeElement.id) === "moreSaveBtn", "Escape closes the menu and returns focus");
-  await page.click("#moreSaveBtn");
-  const [zipDl] = await Promise.all([page.waitForEvent("download"), saveWithoutStamps(page, () => page.click("#saveJpgItem"))]);
-  assert(zipDl.suggestedFilename() === "two_서명.zip", `two pages download as one zip (${zipDl.suggestedFilename()})`);
-  await zipDl.saveAs(`${S}/two.zip`);
-  const entries = zipEntries(fs.readFileSync(`${S}/two.zip`));
-  assert(entries.length === 2 && entries[0].name === "two_서명_1.jpg" && entries[1].name === "two_서명_2.jpg", `zip holds one JPEG per page (${entries.map(e => e.name)})`);
-  assert(entries.every(e => isJpeg(e.data)), "zip entries are whole JPEGs");
 
-  // Once something is placed, images cover only the signed/marked pages; PDF keeps them all.
-  await page.click('.mark-btn[data-tool="check"]');
-  const second = page.locator(".page").nth(1);
-  await second.scrollIntoViewIfNeeded();
-  await second.click({ position: { x: 200, y: 200 } });
-  assert(await page.locator(".item.is-shape").count() === 1, "a check mark sits on page 2");
+  // Images cover only the signed/marked pages; PDF keeps them all.
   await page.click("#moreSaveBtn");
   const [markedDl] = await Promise.all([page.waitForEvent("download"), page.click("#savePngItem")]);
   assert(markedDl.suggestedFilename() === "two_서명.png", `only the marked page 2 is saved, as one image (${markedDl.suggestedFilename()})`);
@@ -108,22 +103,31 @@ async function saveWithoutStamps(page, trigger) {
   await allPdf.saveAs(`${S}/two-marked.pdf`);
   const pdfPages = (fs.readFileSync(`${S}/two-marked.pdf`, "latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
   assert(pdfPages === 2, `PDF still saves both pages (${pdfPages})`);
+  await markPage(page, 0);
+  await page.click("#moreSaveBtn");
+  const [zipDl] = await Promise.all([page.waitForEvent("download"), page.click("#saveJpgItem")]);
+  assert(zipDl.suggestedFilename() === "two_서명.zip", `two marked pages download as one zip (${zipDl.suggestedFilename()})`);
+  await zipDl.saveAs(`${S}/two.zip`);
+  const entries = zipEntries(fs.readFileSync(`${S}/two.zip`));
+  assert(entries.length === 2 && entries[0].name === "two_서명_1.jpg" && entries[1].name === "two_서명_2.jpg", `zip holds one JPEG per page (${entries.map(e => e.name)})`);
+  assert(entries.every(e => isJpeg(e.data)), "zip entries are whole JPEGs");
 
   await page.setInputFiles("#fileInput", `${S}/one.pdf`);
   await page.waitForFunction(() => document.querySelector("#docName").textContent === "one.pdf");
   await page.waitForSelector(".page canvas");
+  await markPage(page, 0);
   await page.click("#moreSaveBtn");
-  const [jpgDl] = await Promise.all([page.waitForEvent("download"), saveWithoutStamps(page, () => page.click("#saveJpgItem"))]);
+  const [jpgDl] = await Promise.all([page.waitForEvent("download"), page.click("#saveJpgItem")]);
   assert(jpgDl.suggestedFilename() === "one_서명.jpg", `one page downloads as a .jpg (${jpgDl.suggestedFilename()})`);
   await jpgDl.saveAs(`${S}/one.jpg`);
   assert(isJpeg(fs.readFileSync(`${S}/one.jpg`)), "the .jpg is a JPEG");
   await page.click("#moreSaveBtn");
-  const [pngDl] = await Promise.all([page.waitForEvent("download"), saveWithoutStamps(page, () => page.click("#savePngItem"))]);
+  const [pngDl] = await Promise.all([page.waitForEvent("download"), page.click("#savePngItem")]);
   assert(pngDl.suggestedFilename() === "one_서명.png", `PNG로 저장 downloads a .png (${pngDl.suggestedFilename()})`);
   await pngDl.saveAs(`${S}/one.png`);
   assert(isPng(fs.readFileSync(`${S}/one.png`)), "the .png is a PNG");
   await page.click("#moreSaveBtn");
-  const [pdfDl] = await Promise.all([page.waitForEvent("download"), saveWithoutStamps(page, () => page.click("#savePdfItem"))]);
+  const [pdfDl] = await Promise.all([page.waitForEvent("download"), page.click("#savePdfItem")]);
   assert(pdfDl.suggestedFilename() === "one_서명.pdf", "the menu still saves a PDF");
   assert(errors.length === 0, `no page errors (${errors})`);
   await page.close();
@@ -142,7 +146,9 @@ async function saveWithoutStamps(page, trigger) {
   await pp.waitForSelector(".page canvas");
   const right = await pp.evaluate(() => innerWidth - document.querySelector("#saveGroup").getBoundingClientRect().right);
   assert(right >= 0 && right <= 16, `phone: save buttons fit at the right edge (${right}px)`);
-  await saveWithoutStamps(pp, () => pp.tap("#saveBtn"));
+  await markPage(pp, 0, { tap: true });
+  await markPage(pp, 1, { tap: true });
+  await pp.tap("#saveBtn");
   await pp.waitForFunction(() => window.__shared.length === 1);
   const shared = await pp.evaluate(() => window.__shared[0]);
   assert(shared.length === 2 && shared.every(f => f.type === "image/png" && f.size > 0) && shared[0].name === "two_서명_1.png", `phone: pages go to the share sheet as PNGs (${shared.map(f => f.name)})`);
