@@ -151,7 +151,7 @@ html[data-platform="extension"] .web-only { display: none; }
 .drop strong { color: #26303a; font-size: 17px; font-weight: 650; }
 .drop span { margin-bottom: 10px; color: var(--muted); font-size: 14px; }
 .viewer.dragging .drop { border-color: var(--blue); background: var(--blue-soft); }
-.viewer.dragging .pages { outline: 2px solid var(--blue); outline-offset: -10px; }
+.viewer.dragging .pages:not(:empty) { outline: 2px solid var(--blue); outline-offset: -10px; }
 
 .pages { display: flex; flex-direction: column; align-items: center; gap: 28px; min-width: min-content; padding: 28px; }
 .page { position: relative; flex: none; background: #fff; box-shadow: 0 0 0 1px #e4e7eb, 0 6px 20px rgba(38,56,80,.08); }
@@ -267,6 +267,9 @@ html[data-platform="extension"] .web-only { display: none; }
 .more-btn::before { content: ""; position: absolute; top: 9px; bottom: 9px; left: 0; width: 1px; background: var(--line-strong); }
 .sig-make .btn:hover:not(:disabled), .more-btn[aria-expanded="true"] { background: var(--neutral-hover); }
 .sig-make .btn:focus-visible { outline-offset: -2px; }
+/* In the top bar it is a toolbar button like 파일 열기, and the menu drops below it. */
+.topbar .sig-make { flex: none; }
+.topbar .sig-make .more-btn { width: 34px; }
 .sig-menu {
   position: absolute; top: calc(100% + 6px); right: 0; z-index: 20; display: grid; min-width: 196px; padding: 6px;
   border: 1px solid var(--line-strong); border-radius: 12px; background: #fff; box-shadow: 0 10px 30px rgba(20, 30, 45, .14);
@@ -404,7 +407,12 @@ html[data-platform="extension"] .web-only { display: none; }
   .sig-make #newSigBtn { flex: none; }
   .sig-make .btn { height: calc(var(--tool) - 2px); min-height: 0; border: 0; background: transparent; }
   .sig-make .more-btn { width: var(--more); }
-  .sig-make .btn:hover:not(:disabled), .sig-make .more-btn[aria-expanded="true"] { background: var(--neutral-hover); }
+  /* Navy like 이미지로 저장 at the top, so the main action stands out in the row. */
+  .sig-make { border-color: var(--navy); background: var(--navy); }
+  .sig-make .btn { color: #fff; }
+  .sig-make .more-btn::before { background: rgba(255, 255, 255, .28); }
+  .sig-make .btn:hover:not(:disabled), .sig-make .more-btn[aria-expanded="true"] { background: var(--navy-hover); }
+  .sig-make .btn:focus-visible { outline-color: #fff; }
   .sig-menu:not(.save-menu) { top: auto; bottom: calc(100% + 8px); left: 0; right: auto; }
   .mark-tools { display: flex; flex: 1 1 0; min-width: 0; margin-top: 0; padding-top: 0; }
   .mark-grid { display: flex; flex: 1; gap: var(--tool-gap); }

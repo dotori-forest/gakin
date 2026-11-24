@@ -490,7 +490,19 @@ function popupMenu(button, menu, container) {
 }
 
 // ⋯ next to 서명 그리기: the other ways to make a signature.
-const closeSigMenu = popupMenu($("moreSigBtn"), $("sigMenu"), document.querySelector(".sig-make"));
+const sigMake = document.querySelector(".sig-make");
+const closeSigMenu = popupMenu($("moreSigBtn"), $("sigMenu"), sigMake);
+
+// 서명 그리기 sits in the top bar between 파일 열기 and 저장 on wide screens,
+// and stays at the start of the bottom tool row on phones.
+const phoneLayout = matchMedia("(max-width: 720px)");
+function placeSigMake() {
+  closeSigMenu();
+  if (phoneLayout.matches) document.querySelector(".sidebar-actions").prepend(sigMake);
+  else $("saveGroup").before(sigMake);
+}
+placeSigMake();
+phoneLayout.addEventListener("change", placeSigMake);
 
 // ---------- name signature dialog ----------
 
